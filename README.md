@@ -3,7 +3,7 @@ This is an adaptation of Nathaniel Daw's two-step decision making task.
 
 - Author: Alexander Breslav (Duke)
 - Collaborators: Lucy Gallop (KCL), Dr. Scott Huettel (Duke), Dr. Nancy Zucker (Duke), Dr. John Pearson (Duke)
-- Original code and stimuli were generously shared by Dr. Arkady Konovalov (UZH) [[citation]](https://www.nature.com/articles/ncomms12438?origin=ppub), Dr. Catherine Hartley (NYU) [[citation]](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4899156/), and Dr. Nikki Sullivan (LSE) [[citation]](https://journals.sagepub.com/doi/abs/10.1177/0956797614559543).
+- Original code and stimuli were generously shared by Dr. Arkady Konovalov (UZH) [[citation]](https://www.nature.com/articles/ncomms12438?origin=ppub), Dr. Catherine Hartley (NYU) [[citation]](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4899156/), and Dr. Nicolette Sullivan (LSE) [[citation]](https://journals.sagepub.com/doi/abs/10.1177/0956797614559543).
 
 This version of the task uses spaceships/aliens stimuli and is designed for teenagers and adults.
 I have made a number of major changes for the purposes of my work:
