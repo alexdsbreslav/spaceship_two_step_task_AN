@@ -1,4 +1,4 @@
-# Spaceship Two-Step Sequential Learning Task
+# Spaceship Two-Step Sequential Learning Task (AN Compatible)
 This is an adaptation of Nathaniel Daw's two-step decision making task.
 
 - Author: Alexander Breslav (Duke)
