@@ -1,7 +1,7 @@
 % Please do not share or use this code without my written permission.
 % Author: Alex Breslav
 
-function exit_flag = tutorial_part1(init)
+function exit_flag = tutorial(init)
 
 % ---- Initial set up
 % capture screenshots

@@ -2,36 +2,21 @@
 % Author: Alex Breslav
 
 function start
-
-  % clear everything from the workspace; everything is saved in the init
-  Screen('CloseAll');
-  FlushEvents;
-
-% -----------------------------------Settings-----------------------------------
+% -----------------------------------settings-----------------------------------
 % ------------------------------------------------------------------------------
 % testing or running the experiment?
-test = 0; % set to 1 for testing
+test = 1; % set to 1 for testing
 
 % ONLY SET = 1 DURING TESTING; collects screenshots of all of the instructions
 img_collect_on = 0;
 
-% define the names of the foods; 5 salty foods followed by 5 sweet foods
-foods = {'CheezIts', 'Fritos', 'Goldfish', 'Popcorn', 'Poppables', 'Jellybeans', 'M&Ms', 'Reeses Pieces', 'Skittles', 'SweeTarts'};
-
-% define the names of the stickers and tattoos; 5 sticker names followed by five tattoo names
-stickers_tattoos = {'Emoji Stickers', 'Animal Stickers', 'Monster Stickers', 'Flower Stickers', 'Dinosaur Stickers', ...
-'Animal Tattoos', 'Rose Tattoos', 'Foxjoy Tattoos', 'Alien Tattos', 'Konsait Tattoos'};
-
 % define the names of the researchers
-researchers = {'Alesha', 'Julie', 'Logan', 'Tatyana', 'Other'}; % list the names of the researchers; do not remove 'other' option
-researchers_idx = [1 2 3 4 5]; % there should be a number for each option
+researchers = {'Lucy', 'Other'}; % list the names of the researchers; do not remove 'other' option
+researchers_idx = [1 2]; % there should be a number for each option
 researchers_text = ['\n\n' ...
   'What is the name of the researcher conducting the study?' '\n' ...
-  '1 = Alesha' '\n' ...
-  '2 = Julie' '\n' ...
-  '3 = Logan' '\n' ...
-  '4 = Tatyana' '\n' ...
-  '5 = Other' '\n' ...
+  '1 = Lucy' '\n' ...
+  '2 = Other' '\n' ...
   'Response: ' ]; % the list and index numbers above need to match the text here perfectly!
 
 % Text formatting specifications
@@ -50,18 +35,17 @@ loss_iti = [3, 0.5];
 % ------------------------------------------------------------------------------
 if test == 1
     testing_on_mac = 1; % testing on the PC, not mac (testing_on_mac = 1 for mac)
-    num_trials_practice = 0;
-    num_trials_main_task = 15;
+    num_trials_practice = 2;
+    num_trials_main_task = 2;
 
     if testing_on_mac == 1
-        file_root = '/Users/alex/OneDrive - Duke University/1_research/2_mdt_thriving/6_raw_data'; % this is set up to use on Alex's personal computer
+        file_root = '/Users/alex/OneDrive - Duke University/1_research/3_mdt_ants/6_raw_data'; % this is set up to use on Alex's personal computer
         sl = '/'; % Mac convention for the slashes
         input_source = 6; % internal keyboard (5); external keyboard (6)
     else
-        % file_root = '\Users\ads48\Documents\mdt_thriving\raw_data'; this is set up for Alex's profile on the test computer
-        file_root = '\Users\THRIVING_Study\Documents\spaceship_task\raw_data'; % this is set up to run on the PC thriving account
+        file_root = 'NEED FILE ROOT'; % this is set up to run on the PC thriving account
         sl = '\'; % PC convention for slashes
-        input_source = 0; % keyboard (input_source = 1 for touchscreen)
+        input_source = 0; % keyboard
     end
 
     confirm = 99;
@@ -95,7 +79,7 @@ else
 % ------------------------------------------------------------------------------
     num_trials_practice = 10; % number of trials in the practice round
     num_trials_main_task = 150; % number of trials in the main task
-    file_root = '\Users\THRIVING_Study\Documents\spaceship_task\raw_data'; % file root to use during the main experimental testing
+    file_root = 'NEED FILE ROOT'
     sl = '\'; % PC convention for slashes
     input_source = 0; % keyboard (input_source = 1 for touchscreen)
 end
@@ -106,8 +90,11 @@ end
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
 % ------------------------------------------------------------------------------
+% clear everything from the workspace; everything is saved in the init
+Screen('CloseAll');
+FlushEvents;
 
-sub = input('NestID: '); %keep sub number as a string so we can validate easily below
+sub = input('subject id: '); %keep sub number as a string so we can validate easily below
 
 % create subject folder in the raw data folder
 filename_subnum = pad(num2str(sub), 4, 'left', '0');
@@ -485,9 +472,9 @@ else
     load([data_file_path sl 'init.mat']);
 end
 
+% start the tutorial
 if start_where <= 2
-% ---- 1: Tutorial
-    exit_flag = tutorial_part1(init);
+    exit_flag = tutorial(init);
 
     if exit_flag == 1
         disp('The script was exited because ESCAPE was pressed')
@@ -495,8 +482,8 @@ if start_where <= 2
     end
 end
 
+% start the practice trials
 if start_where <= 3
-% ---- 2: practice trials (Block 0 in code)
     exit_flag = practice_trials(init, init.num_trials(1), init.block(1));
 
     if exit_flag == 1
@@ -505,51 +492,8 @@ if start_where <= 3
     end
 end
 
+% start the main task
 if start_where <= 4
-% ---- 1: Tutorial
-% ---- space prepped?
-    reward_bowl_prep = 99;
-    while isempty(reward_bowl_prep) || ~ismember(reward_bowl_prep, [0 1])
-        if strcmp(init.condition, 'food')
-          reward_bowl_prep = input(['\n\n' ...
-            'Left Food = ' init.left_item '\n'...
-            'Right Food = ' init.right_item '\n\n' ...
-            '**Left and right is from the participant''s perspective**' '\n\n' ...
-            '1 = Food is set up/participant has water; continue.' '\n' ...
-            '0 = I need to fix something; exit the script.' '\n' ...
-            'Response: ' ]);
-        else
-          reward_bowl_prep = input(['\n\n' ...
-            'Left Bowl = ' init.left_item '\n'...
-            'Right Bowl = ' init.right_item '\n\n' ...
-            '**Left and right is from the participant''s perspective**' '\n\n' ...
-            '1 = Bowls are set up; continue.' '\n' ...
-            '0 = I need to fix something; exit the script.' '\n' ...
-            'Response: ' ]);
-        end
-
-        if isempty(reward_bowl_prep) || ~ismember(reward_bowl_prep, [0 1])
-            disp('Invalid entry, please try again.')
-        end
-    end
-
-    if reward_bowl_prep == 0
-        disp([fprintf('\n') ...
-        'OK, you should restart the function to try again'])
-        sca;
-        return
-    end
-
-    exit_flag = tutorial_part2(init);
-
-    if exit_flag == 1
-        disp('The script was exited because ESCAPE was pressed')
-        sca; return
-    end
-end
-
-if start_where <= 5
-% ---- 3: main experiment trials
     exit_flag = main_task(init, init.num_trials(2), init.block(2));
 
     if exit_flag == 1
@@ -557,7 +501,7 @@ if start_where <= 5
         sca; return
     end
 end
-%
+
 % --- display winnings
 load([data_file_path sl 'task.mat']);
 task_func.output_for_food_choice(init);
