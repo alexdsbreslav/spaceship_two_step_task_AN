@@ -207,13 +207,6 @@ elseif sub_exists == 0
 
     if start_where == 99
         load([data_file_path sl 'init.mat']);
-        if init.block(2) == 1
-            block1_text = 'Money';
-            block2_text = 'Food';
-        else
-            block1_text = 'Food';
-            block2_text = 'Money';
-        end
 
         while isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5])
             start_where = input(['\n\n' ...
@@ -223,8 +216,8 @@ elseif sub_exists == 0
             '1 = Re-initialize the subject''s data (this completely starts over)' '\n' ...
             '2 = Tutorial' '\n' ...
             '3 = Practice Game' '\n' ...
-            '4 = Block 1 (' block1_text ')' '\n' ...
-            '5 = Block 1 (' block2_text ')' '\n' ...
+            '4 = Block 1 (' init.block(1) ')' '\n' ...
+            '5 = Block 1 (' init.block(2) ')' '\n' ...
             'Response: ']);
 
             if isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5])
@@ -286,14 +279,12 @@ if start_where <= 1;
     end
 
     % stimuli sets
-    spaceships = {'cornhusk', 'stingray', 'triangle', 'tripod'};
-    aliens = {'gizmo', 'sully', 'bear', 'vlad', 'piglet', 'elmo', 'mac', 'sid'};
-    step1_colors = {'blue', 'orange'};
-    step2_color_pairs = {'red_purple', 'yellow_green'};
+    spaceships = {'cornhusk', 'stingray', 'triangle', 'tripod', 'egg', 'ufo'};
+    aliens = {'bubbles', 'eggbert', 'frog', 'fuzz', 'ghost', 'legs', 'nightking', 'penguin', 'rooster', 'sun', 'unicorn', 'viking'};
+    step2_color_pairs = {'orange_purple', 'yellow_green', 'red_blue'};
     step2_color = {'warm', 'cool'};
 
     % create shuffled arrays of each of the symbols and colors
-    init.stim_color_step1 = step1_colors(randperm(numel(step1_colors)));
     init.stim_colors_step2 = step2_color_pairs(randperm(numel(step2_color_pairs)));
     init.stim_step2_color_select = step2_color(randperm(numel(step2_color)));
     init.spaceships = spaceships(randperm(numel(spaceships)));
@@ -301,7 +292,11 @@ if start_where <= 1;
 
     % randomize the block order for the food and money blocks
     block = randi([1,2]);
-    init.block = [0 block 3-block];
+    if block == 1
+        init.block = {'practice' 'food' 'money'};
+    else
+        init.block = {'practice' 'money' 'food'};
+    end
 
     % input the number of trials per block; 1 = practice trials, 2 = experimental blocks
     init.num_trials = [num_trials_practice num_trials_main_task];
@@ -314,21 +309,6 @@ if start_where <= 1;
     init.textsize = textsize;
     init.textsize_feedback = textsize_feedback;
     init.textsize_tickets = textsize_tickets;
-
-    % set the load bar formaating
-    init.load_bar_dimensions = load_bar_dimensions;
-
-    % create the ITIs
-    iti_init = zeros(150,6);
-    % loss iti
-    iti_init(:,1) = normrnd(loss_iti(1),loss_iti(2),150,1);
-    % win iti
-    iti_init(:,2) = normrnd(win_iti(1),win_iti(2),150,1);
-    % number of frames per iti; subtract 24 frames because the chosen stimulus is shown for 1 second before the loading bar
-    iti_init(:,3:4) = floor(iti_init(:,1:2)*24) - 24;
-    %number of pixels per frame
-    iti_init(:,5:6) = (ones(150,2)*load_bar_dimensions(1))./iti_init(:,3:4);
-    init.iti_init = iti_init;
 
     % load the walk
     load(['walks.mat']);

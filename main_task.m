@@ -41,17 +41,20 @@ end
 if isfile([init.data_file_path init.slash_convention 'task.mat'])
     load([init.data_file_path init.slash_convention 'task.mat']);
 else
+    % find the index of the block
+    block_idx = find(strcmp(init.block, block))
+
     % set up the structure to save all of the variables
     task = struct;
     task.rng_seed = rng_seed; % save the rng seed set at the top of the script
     task.subject = init.sub;
-    task.stim_color_step1 = init.stim_color_step1(block+1);
-    task.stim_colors_step2 = init.stim_colors_step2(block+1);
+    task.stim_colors_step2 = init.stim_colors_step2(block_idx);
     task.transition_prob = 0.4 + 0.6.*rand(trials,2); %transition probabilities;
     task.transition_det = rand(trials, 2);
-    task.block = find(init.block == 1);
-    task.spaceships = init.spaceships(3:4);
-    task.aliens = init.aliens(5:8);
+    task.block = block;
+    task.block_idx = block_idx
+    task.spaceships = init.spaceships(block_idx+2:block_idx+3);
+    task.aliens = init.aliens(block_idx+4:block_idx+7);
 
     % preallocate the variables that will be filled in
     task.position = NaN(trials,4);
@@ -69,7 +72,7 @@ else
 end
 
 % save everything
-save([init.data_file_path sl 'task'], 'task', '-v6');
+save([init.data_file_path sl block], 'task', '-v6');
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -101,18 +104,6 @@ alien_win = CenterRectOnPoint(r_small, rect(3)*.3, rect(4)*0.5);
 treasure_win = CenterRectOnPoint(r_small, rect(3)*.7, rect(4)*0.5);
 alien_lose = CenterRectOnPoint(r_small, rect(3)*.5, rect(4)*0.5);
 
-% ---- locations on the trade screen
-treasure_trade = CenterRectOnPoint(r_small, rect(3)*.25, rect(4)*0.55);
-reward_top_point = CenterRectOnPoint(r_small, rect(3)*.75, rect(4)*0.25);
-reward_bot_point = CenterRectOnPoint(r_small, rect(3)*.75, rect(4)*0.75);
-reward_text = CenterRectOnPoint([0,0,200,75], rect(3)*.25, rect(4)*0.35);
-tick_text_top = CenterRectOnPoint(r_tick_text, rect(3)*.75, rect(4)*0.25);
-tick_text_bot = CenterRectOnPoint(r_tick_text, rect(3)*.75, rect(4)*0.75);
-
-% ---- frames during the trade screen
-reward_top_frame = CenterRectOnPoint(rc_small, rect(3)*0.75, rect(4)*0.25);
-reward_bot_frame = CenterRectOnPoint(rc_small, rect(3)*0.75, rect(4)*0.75);
-
 % ---- define touchscreen rectangles to click (top/bottom)
 rects{2,1} = [rect(3)*0.75 - rc_small(3)/2, rect(4)*0.25 - rc_small(4)/2, rect(3)*0.75 + rc_small(3)/2, rect(4)*0.25 + rc_small(4)/2];
 rects{2,2} = [rect(3)*0.75 - rc_small(3)/2, rect(4)*0.75 - rc_small(4)/2, rect(3)*0.75 + rc_small(3)/2, rect(4)*0.75 + rc_small(4)/2];
@@ -140,48 +131,53 @@ treasure_spent = Screen('MakeTexture', w, treasure_spent);
 earth = Screen('MakeTexture', w, earth);
 return_home = Screen('MakeTexture', w, return_home);
 
-% ---- these are drawn later because their location is randomized
-stickers = imread(['stimuli' sl 'stickers.png'],'png');
-snacks = imread(['stimuli' sl 'snacks.png'],'png');
-tickets = imread(['stimuli' sl 'tickets.png'],'png');
-
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % 4 - Load and create images
+
+% assign the indices for the stimuli that I want to pull
+if block_idx = 1
+    spaceship_idx = [3 4]
+    alien_idx = [5 6 7 8]
+else
+    spaceship_idx = [5 6]
+    alien_idx = [9 10 11 12]
+end
+
 % --- spaceships
-  A1 = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(2)) sl ...
-     char(init.spaceships(3)) sl 'docked.png'],'png');
-  B1 = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(2)) sl ...
-     char(init.spaceships(4)) sl 'docked.png'],'png');
+  A1 = imread(['stimuli' sl 'spaceships' sl ...
+     char(init.spaceships(spaceship_idx(1))) sl 'docked.png'],'png');
+  B1 = imread(['stimuli' sl 'spaceships' sl ...
+     char(init.spaceships(spaceship_idx(2))) sl 'docked.png'],'png');
 
-  A1_out = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(2)) sl ...
-     char(init.spaceships(3)) sl 'out.png'],'png');
-  A1_return = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(2)) sl ...
-     char(init.spaceships(3)) sl 'return.png'],'png');
+  A1_out = imread(['stimuli' sl 'spaceships' sl ...
+     char(init.spaceships(spaceship_idx(1))) sl 'out.png'],'png');
+  A1_return = imread(['stimuli' sl 'spaceships' sl ...
+     char(init.spaceships(spaceship_idx(1))) sl 'return.png'],'png');
 
-  B1_out = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(2)) sl ...
-     char(init.spaceships(4)) sl 'out.png'],'png');
-  B1_return = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(2)) sl ...
-     char(init.spaceships(4)) sl 'return.png'],'png');
+  B1_out = imread(['stimuli' sl 'spaceships' sl ...
+     char(init.spaceships(spaceship_idx(2))) sl 'out.png'],'png');
+  B1_return = imread(['stimuli' sl 'spaceships' sl ...
+     char(init.spaceships(spaceship_idx(2))) sl 'return.png'],'png');
 
 % ---- aliens
-A2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(2)) sl char(init.stim_step2_color_select(1)) sl ...
-  char(init.aliens(5)) '.png'],'png');
-B2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(2)) sl char(init.stim_step2_color_select(1)) sl ...
-  char(init.aliens(6)) '.png'],'png');
+A2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx+1)) sl char(init.stim_step2_color_select(1)) sl ...
+  char(init.aliens(alien_idx(1))) '.png'],'png');
+B2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx+1)) sl char(init.stim_step2_color_select(1)) sl ...
+  char(init.aliens(alien_idx(2))) '.png'],'png');
 
-A3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(2)) sl char(init.stim_step2_color_select(2)) sl ...
-  char(init.aliens(7)) '.png'],'png');
-B3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(2)) sl char(init.stim_step2_color_select(2)) sl ...
-  char(init.aliens(8)) '.png'],'png');
+A3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx+1)) sl char(init.stim_step2_color_select(2)) sl ...
+  char(init.aliens(alien_idx(3))) '.png'],'png');
+B3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx+1)) sl char(init.stim_step2_color_select(2)) sl ...
+  char(init.aliens(alien_idx(4))) '.png'],'png');
 
 % read and draw background stimuli
-space = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(2)) sl 'space.png'],'png');
+space = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx+1)) sl 'space.png'],'png');
 planet_home = imread(['stimuli' sl 'home_planet.png'],'png');
-planet_2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(2)) sl char(init.stim_step2_color_select(1)) sl 'planet.png'],'png');
-planet_3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(2)) sl char(init.stim_step2_color_select(2)) sl 'planet.png'],'png');
+planet_2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx+1)) sl char(init.stim_step2_color_select(1)) sl 'planet.png'],'png');
+planet_3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx+1)) sl char(init.stim_step2_color_select(2)) sl 'planet.png'],'png');
 
 space = Screen('MakeTexture', w, space);
 planet_home = Screen('MakeTexture', w, planet_home);
@@ -189,9 +185,14 @@ planet_2 = Screen('MakeTexture', w, planet_2);
 planet_3 = Screen('MakeTexture', w, planet_3);
 
 if strcmp(char(init.stim_step2_color_select(1)), 'warm') == 1
-    if strcmp(char(init.stim_colors_step2(2)), 'red_purple') == 1
+    if strcmp(char(init.stim_colors_step2(block_idx+1)), 'red_blue') == 1
         state2_color = 'red';
         state2_name = 'Rigel';
+        state3_color = 'blue';
+        state3_name = 'Benzar';
+    elseif strcmp(char(init.stim_colors_step2(block_idx+1)), 'orange_purple') == 1
+        state2_color = 'orange';
+        state2_name = 'Omicron';
         state3_color = 'purple';
         state3_name = 'Pentarus';
     else
@@ -201,16 +202,21 @@ if strcmp(char(init.stim_step2_color_select(1)), 'warm') == 1
         state3_name = 'Gaspar';
     end
 else
-    if strcmp(char(init.stim_colors_step2(2)), 'red_purple') == 1
-        state2_color = 'purple';
-        state2_name = 'Pentarus';
+    if strcmp(char(init.stim_colors_step2(block_idx+1)), 'red_blue') == 1
+        state2_color = 'blue';
+        state2_name = 'Benzar';
         state3_color = 'red';
         state3_name = 'Rigel';
+    elseif strcmp(char(init.stim_colors_step2(block_idx+1)), 'orange_purple') == 1
+        state2_color = 'purple';
+        state2_name = 'Pentarus';
+        state3_color = 'orange';
+        state3_name = 'Omicron';
     else
-        state2_color = 'green';
-        state2_name = 'Gaspar';
-        state3_color = 'yellow';
-        state3_name = 'Yadera';
+        state2_color = 'yellow';
+        state2_name = 'Yadera';
+        state3_color = 'green';
+        state3_name = 'Gaspar';
     end
 end
 % -----------------------------------------------------------------------------
@@ -670,20 +676,16 @@ for trial = init.trials_start:trials
     end % close the if/else for state
 
     % ---- Return Home Screen
-    % variable text that will change based on their reward choice and trial
     Screen('TextSize', w, init.textsize);
-    countdown_text = task_func.rewards_text(condition, block, trial, trials, nansum(task.payoff(trial, :)), task.action(trial,4), task.tick(trial,3));
     Screen('DrawTexture', w, return_home, [], space_bg);
     ship = task_func.drawspaceship(w, A1_out, A1_return, B1_out, B1_return, task.action(trial,1), 'return');
     Screen('DrawTexture', w, ship, [], spaceship_return);
-
-    % countdown text
     DrawFormattedText(w, [
-        countdown_text ...
+        'Returning home!' ...
         ], 'center', 'center', white, [], [], [], 1.6);
-
+    WaitSecs(init.explore_time)
     % saving the data every trial
-    save([init.data_file_path sl 'task'], 'task', '-v6');
+    save([init.data_file_path sl block], 'task', '-v6');
 
 end % close the entire for loop
 RestrictKeysForKbCheck([]);
@@ -693,7 +695,7 @@ RestrictKeysForKbCheck([]);
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % 9 - calculate ticket sum and do final save of the data
-save([init.data_file_path sl 'task'], 'task', '-v6');
+save([init.data_file_path sl block], 'task', '-v6');
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
