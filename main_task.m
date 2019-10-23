@@ -62,9 +62,6 @@ else
     task.on_datetime = cell(trials,4);
     task.off_datetime = cell(trials,4);
     task.rt = task.off - task.on;
-    task.iti_start = NaN(trials,1);
-    task.iti_actual = zeros(trials, 1);
-    task.iti_selected = zeros(trials, 1);
     task.payoff_det = rand(trials,4);
     task.payoff = NaN(trials,2);
     task.state = NaN(trials,1);
@@ -234,36 +231,6 @@ white = [253 252 250];
 chosen_color = [0 220 0];
 frame_color = white;
 
-% ---- formatting for loading bar
-hor_align = rect(3)*0.5;
-ver_align = rect(4)*0.55;
-rate_obj = robotics.Rate(24);
-
-% set initial values for distribution
-tick_mean = 10 + (init.purchase_early - 1)*5;
-tick_window = 7;
-
-% set parameters for mf estimator of ticket value
-tick_alpha = 0.5;
-tick_beta = 5;
-task.tick(:,4) = tick_alpha;
-task.tick(:,5) = tick_beta;
-
-% set initial values for tickets
-task.tick(1,1) = tick_mean;
-task.tick(1,2) = tick_window;
-task.tick(1,3) = tick_mean;
-
-% prob choose tickets given
-% if the value of snacks equals the mean of the dist for tickets
-% then the prob of choosing the tickets, given the pull equals
-% e^pull/(e^pull + e^mean)
-% I need to normalize the amount they are winning before plugging in here
-norm_factor = max(task.tick(1,1),task.tick(1,3));
-task.tick(1,6) = exp(tick_beta*task.tick(1,3)/norm_factor)/(exp(tick_beta*task.tick(1,3)/norm_factor) + exp(tick_beta*task.tick(1,1)/norm_factor));
-
-condition = init.condition;
-
 % ---- Waiting screen
 Screen('FillRect', w, black);
 Screen('TextSize', w, init.textsize);
@@ -391,16 +358,10 @@ for trial = init.trials_start:trials
         if trial == (trials/5) + 1
             DrawFormattedText(w, [
                 'Let''s pause the game and take a short break!' '\n' ...
-                'You''ve earned ' num2str(nansum(task.tick(1:trial-1,7))) ' tickets. Nice job!' '\n\n' ...
-                'This is a good time to take a drink of water.' '\n\n' ...
-                'When you are ready, ' init.researcher ' will unpause the game.' ...
                 ],'center', 'center', white, [], [], [], 1.6);
         else
             DrawFormattedText(w, [
                 'Let''s pause the game and take a short break!' '\n' ...
-                'You''ve earned ' num2str(nansum(task.tick(trial-trials/5:trial-1,7))) ' more tickets. Nice job!' '\n\n' ...
-                'This is a good time to take a drink of water.' '\n\n' ...
-                'When you are ready, ' init.researcher ' will unpause the game.' ...
                 ],'center', 'center', white, [], [], [], 1.6);
         end
 
@@ -607,225 +568,11 @@ for trial = init.trials_start:trials
         Screen('Flip', w);
         WaitSecs(init.feedback_time);
 
-      % ---- reward trade screen
-        task.position(trial,4) = round(rand); %randomizing images positions
-        type = task.position(trial,4);
-
-        % ---- Draw reward stimuli; this randomizes their location
-        reward_top = task_func.drawrewards(w, condition, snacks, stickers, tickets, type);
-        reward_bot = task_func.drawrewards(w, condition, snacks, stickers, tickets, 1 - type);
-
-        if task.payoff(trial, 1) == 1
-        % ---- Draw trial screen
-              % draw treasure to trade
-              Screen('DrawTexture', w, treasure, [], treasure_trade);
-              DrawFormattedText(w, 'Trade your space treasure', 'center', 'center', white, [],[],[],[],[],reward_text);
-              % draw rewards
-              Screen('DrawTexture', w, reward_top, [], reward_top_point);
-              Screen('DrawTexture', w, reward_bot, [], reward_bot_point);
-              % draw frames around rewards
-              Screen('FrameRect',w,frame_color,reward_top_frame,10);
-              Screen('FrameRect',w,frame_color,reward_bot_frame,10);
-              % draw number of tickets
-              Screen('TextSize', w, init.textsize_tickets);
-              if type == 0
-                  DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_bot);
-              else
-                  DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_top);
-              end
-              Screen('Flip', w);
-
-        % ---- calc prob of choosing tickets
-              norm_factor = max(task.tick(trial,1),task.tick(trial,3));
-              task.tick(trial,6) = exp(tick_beta*task.tick(trial,3)/norm_factor)/(exp(tick_beta*task.tick(trial,3)/norm_factor) + exp(tick_beta*task.tick(trial,1)/norm_factor));
-        % ---- start reaction timer
-              task.on(trial,4) = GetSecs - t0;
-              task.on_datetime{trial,4} = clock;
-
-        % ---- capture key press
-              [selection, x, y] = task_func.selection(init.input_source, [U,D], w, rects);
-              task.click_coord(trial, 7) = x;
-              task.click_coord(trial, 8) = y;
-
-        % ---- stop reaction timer
-              task.off(trial,4) = GetSecs - t0;
-              task.off_datetime{trial,4} = clock;
-
-        % ---- capture selection
-              [task.action(trial,4), choice_loc] = task_func.choice(type, [U,D], selection, x, y);
-
-              if task.action(trial,4) == 0
-                  % chose snack/wrong --> increase value of snack, increase range of dist
-                  if task.tick(trial, 3) > task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,8) == -1
-                          task.tick(trial+1,2) = tick_window;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2) + 1;
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1) + tick_alpha*(task.tick(trial,3) - task.tick(trial,1));
-                  % chose snack/right --> decrease range of dist
-                  % if values =, then chose snack but prediction = 50% --> keep range of dist
-                  elseif task.tick(trial, 3) < task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,2) > 2
-                          task.tick(trial+1,2) = task.tick(trial,2) - 1;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2);
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1);
-                  else
-                      % range of dist
-                      task.tick(trial+1,2) = task.tick(trial,2);
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1);
-                  end
-                  % selected amount from normal dist
-                  [task.tick(trial+1,3), task.tick(trial+1,8)] = task_func.pull_ticket(task.tick(trial+1, 1), task.tick(trial+1,2), trial, task.tick(1:trial, 8));
-              elseif task.action(trial,4) == 1
-                  % add tickets offered to tickets won!
-                  task.tick(trial,7) = task.tick(trial,3);
-                  % chose ticket/right --> decrease range of dist
-                  if task.tick(trial, 3) > task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,2) > 2
-                          task.tick(trial+1,2) = task.tick(trial,2) - 1;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2);
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1);
-                  % chose ticket/wrong --> increase range of dist
-                  % if values =, then chose snack but prediction = 50% --> keep range of dist
-                  elseif task.tick(trial, 3) < task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,8) == -1
-                          task.tick(trial+1,2) = tick_window;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2) + 1;
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1) + tick_alpha*(task.tick(trial,3) - task.tick(trial,1));
-                  else
-                      % range of dist
-                      task.tick(trial+1,2) = task.tick(trial,2);
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1) + tick_alpha*(task.tick(trial,3) - task.tick(trial,1));
-                  end
-                  % selected amount from normal dist
-                  [task.tick(trial+1,3), task.tick(trial+1,8)] = task_func.pull_ticket(task.tick(trial+1, 1), task.tick(trial+1,2), trial, task.tick(1:trial, 8));
-              end
-
-              if (type == 0 && task.action(trial,4) == 0) || (type == 1 && task.action(trial,4) == 1)
-                  choice_loc = U;
-              else
-                  choice_loc = D;
-              end
-        % ---- feedback screen
-             if choice_loc == U
-                % draw treasure to trade
-                Screen('TextSize', w, init.textsize_feedback);
-                Screen('DrawTexture', w, treasure_spent, [], treasure_trade);
-                DrawFormattedText(w, 'Trade your space treasure', 'center', 'center', white, [],[],[],[],[],reward_text);
-                % draw original stimuli
-                Screen('DrawTexture', w, reward_top, [], reward_top_point);
-                Screen('DrawTexture', w, reward_bot, [], reward_bot_point);
-                % draw frames around original stimuli
-                Screen('FrameRect',w,chosen_color,reward_top_frame,10);
-                Screen('FrameRect',w,frame_color,reward_bot_frame,10);
-                % draw number of tickets
-                Screen('TextSize', w, init.textsize_tickets);
-                if type == 0
-                    DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_bot);
-                else
-                    DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_top);
-                end
-                Screen('Flip', w);
-                % wait 1 second
-                WaitSecs(init.feedback_time);
-             elseif choice_loc == D
-                 % draw treasure to trade
-                 Screen('TextSize', w, init.textsize_feedback);
-                 Screen('DrawTexture', w, treasure_spent, [], treasure_trade);
-                 DrawFormattedText(w, 'Trade your space treasure', 'center', 'center', white, [],[],[],[],[],reward_text);
-                 % draw original stimuli
-                 Screen('DrawTexture', w, reward_top, [], reward_top_point);
-                 Screen('DrawTexture', w, reward_bot, [], reward_bot_point);
-                 % draw frames around original stimuli
-                 Screen('FrameRect',w,frame_color,reward_top_frame,10);
-                 Screen('FrameRect',w,chosen_color,reward_bot_frame,10);
-                 % draw number of tickets
-                 Screen('TextSize', w, init.textsize_tickets);
-                 if type == 0
-                     DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_bot);
-                 else
-                     DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_top);
-                 end
-                 Screen('Flip', w);
-                 % wait 1 second
-                 WaitSecs(init.feedback_time);
-              end
-        else
-            if type == 0
-                earth_loc = reward_top_point;
-                earth_frame = reward_top_frame;
-            else
-                earth_loc = reward_bot_point;
-                earth_frame = reward_bot_frame;
-            end
-
-            % carry the ticket total values from the last trial
-            task.tick(trial+1,:) = task.tick(trial,:);
-            task.tick(trial, 1:7) = NaN;
-            task.tick(trial, 8) = 0;
-
-            % ---- Draw trial screen
-            % draw original stimuli
-            DrawFormattedText(w, 'Select Earth to return home', rect(3)*0.125, 'center', white);
-            Screen('DrawTexture', w, earth, [], earth_loc);
-            % draw frames around original stimuli
-            Screen('FrameRect',w,frame_color,earth_frame,10);
-            Screen('Flip', w);
-
-            % ---- start reaction timer
-            task.on(trial,4) = GetSecs - t0;
-            task.on_datetime{trial,4} = clock;
-
-            % ---- capture key press
-            if type == 0
-                [selection, x, y] = task_func.selection(init.input_source, [U], w, rects);
-            else
-                [selection, x, y] = task_func.selection(init.input_source, [D], w, rects);
-            end
-
-            task.click_coord(trial, 7) = x;
-            task.click_coord(trial, 8) = y;
-
-            % ---- stop reaction timer
-            task.off(trial,4) = GetSecs - t0;
-            task.off_datetime{trial,4} = clock;
-
-            % ---- code selection
-            task.action(trial,4)= NaN;
-
-            % ---- feedback screen
-            % draw original stimuli
-            DrawFormattedText(w, 'Select Earth to return home', rect(3)*0.125, 'center', white);
-            Screen('DrawTexture', w, earth, [], earth_loc);
-            % draw frames around original stimuli
-            Screen('FrameRect',w,chosen_color,earth_frame,10);
-            Screen('Flip', w);
-            % wait 1 second
-            WaitSecs(init.feedback_time);
-       end
-
     % -----------------------------------------------------------------------------
     % -----------------------------------------------------------------------------
     % -----------------------------------------------------------------------------
     % -----------------------------------------------------------------------------
-    % 9.2B State 3
+    % State 3
     else
 
     % Randomize the left/right position of the original stimuli
@@ -920,254 +667,20 @@ for trial = init.trials_start:trials
         end
         Screen('Flip', w);
         WaitSecs(init.feedback_time);
-
-        % ---- reward trade screen
-        task.position(trial,4) = round(rand); %randomizing images positions
-        type = task.position(trial,4);
-        % ---- Draw reward stimuli; this randomizes their location
-        reward_top = task_func.drawrewards(w, condition, snacks, stickers, tickets, type);
-        reward_bot = task_func.drawrewards(w, condition, snacks, stickers, tickets, 1 - type);
-
-        if task.payoff(trial, 2) == 1
-        % ---- Draw trial screen
-              % draw treasure to trade
-              Screen('DrawTexture', w, treasure, [], treasure_trade);
-              DrawFormattedText(w, 'Trade your space treasure', 'center', 'center', white, [],[],[],[],[],reward_text);
-              % draw original stimuli
-              Screen('DrawTexture', w, reward_top, [], reward_top_point);
-              Screen('DrawTexture', w, reward_bot, [], reward_bot_point);
-              % draw frames around original stimuli
-              Screen('FrameRect',w,frame_color,reward_top_frame,10);
-              Screen('FrameRect',w,frame_color,reward_bot_frame,10);
-              % draw number of tickets
-              Screen('TextSize', w, init.textsize_tickets);
-              if type == 0
-                  DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_bot);
-              else
-                  DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_top);
-              end
-              Screen('Flip', w);
-
-        % ---- calc prob of choosing tickets
-              norm_factor = max(task.tick(trial,1),task.tick(trial,3));
-              task.tick(trial,6) = exp(tick_beta*task.tick(trial,3)/norm_factor)/(exp(tick_beta*task.tick(trial,3)/norm_factor) + exp(tick_beta*task.tick(trial,1)/norm_factor));
-
-        % ---- start reaction timer
-              task.on(trial,4) = GetSecs - t0;
-              task.on_datetime{trial,4} = clock;
-
-        % ---- capture key press
-              [selection, x, y] = task_func.selection(init.input_source, [U,D], w, rects);
-              task.click_coord(trial, 7) = x;
-              task.click_coord(trial, 8) = y;
-
-        % ---- stop reaction timer
-              task.off(trial,4) = GetSecs - t0;
-              task.off_datetime{trial,4} = clock;
-
-        % ---- capture selection
-              [task.action(trial,4), choice_loc] = task_func.choice(type, [U,D], selection, x, y);
-
-              if task.action(trial,4) == 0
-                  % chose snack/wrong --> increase range of dist
-                  if task.tick(trial, 3) > task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,8) == -1
-                          task.tick(trial+1,2) = tick_window;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2) + 1;
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1) + tick_alpha*(task.tick(trial,3) - task.tick(trial,1));
-                  % chose snack/right --> decrease range of dist
-                  % if values =, then chose snack but prediction = 50% --> keep range of dist
-                  elseif task.tick(trial, 3) < task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,2) > 2
-                          task.tick(trial+1,2) = task.tick(trial,2) - 1;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2);
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1);
-                  else
-                      % range of dist
-                      task.tick(trial+1,2) = task.tick(trial,2);
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1);
-                  end
-                  % selected amount from normal dist
-                  [task.tick(trial+1,3), task.tick(trial+1,8)] = task_func.pull_ticket(task.tick(trial+1, 1), task.tick(trial+1,2), trial, task.tick(1:trial, 8));
-              elseif task.action(trial,4) == 1
-                  % add tickets offered to tickets won!
-                  task.tick(trial,7) = task.tick(trial,3);
-                  % mean of dist
-                  task.tick(trial+1,1) = task.tick(trial,1) + tick_alpha*(task.tick(trial,3)-task.tick(trial,1));
-                  % chose ticket/right --> decrease range of dist
-                  if task.tick(trial, 3) > task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,2) > 2
-                          task.tick(trial+1,2) = task.tick(trial,2) - 1;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2);
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1);
-                  % chose ticket/wrong --> increase range of dist
-                  % if values =, then chose snack but prediction = 50% --> keep range of dist
-                  elseif task.tick(trial, 3) < task.tick(trial, 1)
-                      % range of dist
-                      if task.tick(trial,8) == -1
-                          task.tick(trial+1,2) = tick_window;
-                      else
-                          task.tick(trial+1,2) = task.tick(trial,2) + 1;
-                      end
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1) + tick_alpha*(task.tick(trial,3) - task.tick(trial,1));
-                  else
-                      % range of dist
-                      task.tick(trial+1,2) = task.tick(trial,2);
-                      % mean of dist
-                      task.tick(trial+1,1) = task.tick(trial,1) + tick_alpha*(task.tick(trial,3) - task.tick(trial,1));
-                  end
-                  % selected amount from normal dist
-                  [task.tick(trial+1,3), task.tick(trial+1,8)] = task_func.pull_ticket(task.tick(trial+1, 1), task.tick(trial+1,2), trial, task.tick(1:trial, 8));
-              end
-
-        % ---- feedback screen
-              if choice_loc == U
-                  % draw treasure to trade
-                  Screen('TextSize', w, init.textsize_feedback);
-                  Screen('DrawTexture', w, treasure_spent, [], treasure_trade);
-                  DrawFormattedText(w, 'Trade your space treasure', 'center', 'center', white, [],[],[],[],[],reward_text);
-                  % draw original stimuli
-                  Screen('DrawTexture', w, reward_top, [], reward_top_point);
-                  Screen('DrawTexture', w, reward_bot, [], reward_bot_point);
-                  % draw frames around original stimuli
-                  Screen('FrameRect',w,chosen_color,reward_top_frame,10);
-                  Screen('FrameRect',w,frame_color,reward_bot_frame,10);
-                  % draw number of tickets
-                  Screen('TextSize', w, init.textsize_tickets);
-                  if type == 0
-                      DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_bot);
-                  else
-                      DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_top);
-                  end
-                  Screen('Flip', w);
-                  % wait 1 second
-                  WaitSecs(init.feedback_time);
-
-             elseif choice_loc == D
-                 % draw treasure to trade
-                 Screen('TextSize', w, init.textsize_feedback);
-                 Screen('DrawTexture', w, treasure_spent, [], treasure_trade);
-                 DrawFormattedText(w, 'Trade your space treasure', 'center', 'center', white, [],[],[],[],[],reward_text);
-                 % draw original stimuli
-                 Screen('DrawTexture', w, reward_top, [], reward_top_point);
-                 Screen('DrawTexture', w, reward_bot, [], reward_bot_point);
-                 % draw frames around original stimuli
-                 Screen('FrameRect',w,frame_color,reward_top_frame,10);
-                 Screen('FrameRect',w,chosen_color,reward_bot_frame,10);
-                 % draw number of tickets
-                 Screen('TextSize', w, init.textsize_tickets);
-                 if type == 0
-                     DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_bot);
-                 else
-                     DrawFormattedText(w, num2str(task.tick(trial,3)), 'center', 'center', white, [],[],[],[],[],tick_text_top);
-                 end
-                 Screen('Flip', w);
-                 % wait 1 second
-                 WaitSecs(init.feedback_time);
-              end
-        else
-            if type == 0
-                earth_loc = reward_top_point;
-                earth_frame = reward_top_frame;
-            else
-                earth_loc = reward_bot_point;
-                earth_frame = reward_bot_frame;
-            end
-
-            % carry the ticket total values from the last trial
-            task.tick(trial+1,:) = task.tick(trial,:);
-            task.tick(trial, 1:7) = NaN;
-            task.tick(trial, 8) = 0;
-
-            % ---- Draw trial screen
-            % draw original stimuli
-            DrawFormattedText(w, 'Select Earth to return home', rect(3)*0.125, 'center', white);
-            Screen('DrawTexture', w, earth, [], earth_loc);
-            % draw frames around original stimuli
-            Screen('FrameRect',w,frame_color,earth_frame,10);
-            Screen('Flip', w);
-
-            % ---- start reaction timer
-            task.on(trial,4) = GetSecs - t0;
-            task.on_datetime{trial,4} = clock;
-
-            % ---- capture key press
-            if type == 0
-                [selection, x, y] = task_func.selection(init.input_source, [U], w, rects);
-            else
-                [selection, x, y] = task_func.selection(init.input_source, [D], w, rects);
-            end
-
-            task.click_coord(trial, 7) = x;
-            task.click_coord(trial, 8) = y;
-
-            % ---- stop reaction timer
-            task.off(trial,4) = GetSecs - t0;
-            task.off_datetime{trial,4} = clock;
-
-            % ---- code selection
-            task.action(trial,4) = NaN;
-
-            % ---- feedback screen
-            % draw original stimuli
-            DrawFormattedText(w, 'Select Earth to return home', rect(3)*0.125, 'center', white);
-            Screen('DrawTexture', w, earth, [], earth_loc);
-            % draw frames around original stimuli
-            Screen('FrameRect',w,chosen_color,earth_frame,10);
-            Screen('Flip', w);
-            % wait 1 second
-            WaitSecs(init.feedback_time);
-       end
     end % close the if/else for state
 
     % ---- Return Home Screen
     % variable text that will change based on their reward choice and trial
     Screen('TextSize', w, init.textsize);
     countdown_text = task_func.rewards_text(condition, block, trial, trials, nansum(task.payoff(trial, :)), task.action(trial,4), task.tick(trial,3));
-    task.iti_start(trial) = GetSecs - t0;
-    % countdown to next trial
-    for i = 1:init.iti_init(trial, nansum(task.payoff(trial,:))+3)
-        % ---- space exploration page
-        Screen('DrawTexture', w, return_home, [], space_bg);
-        ship = task_func.drawspaceship(w, A1_out, A1_return, B1_out, B1_return, task.action(trial,1), 'return');
-        Screen('DrawTexture', w, ship, [], spaceship_return);
+    Screen('DrawTexture', w, return_home, [], space_bg);
+    ship = task_func.drawspaceship(w, A1_out, A1_return, B1_out, B1_return, task.action(trial,1), 'return');
+    Screen('DrawTexture', w, ship, [], spaceship_return);
 
-        % countdown text
-        DrawFormattedText(w, [
-            countdown_text ...
-            ], 'center', 'center', white, [], [], [], 1.6);
-
-        % load bar fill calculation
-        fill_width = init.iti_init(trial, nansum(task.payoff(trial,:))+5) * i;
-
-        % fill for the load bar
-        Screen('FillRect',w, [255 255 255], ...
-        CenterRectOnPoint([0,0,fill_width, init.load_bar_dimensions(2)], hor_align - init.load_bar_dimensions(1)/2 + fill_width/2, ver_align));
-
-       % outline for the load bar
-        Screen('FrameRect',w, [255 255 255], ...
-        CenterRectOnPoint([0,0,init.load_bar_dimensions(1),init.load_bar_dimensions(2)], hor_align, ver_align), 3);
-
-       Screen(w, 'Flip');
-       waitfor(rate_obj);
-    end
-
-    task.iti_actual(trial) = GetSecs - t0 - task.iti_start(trial);
-    task.iti_selected(trial) = init.iti_init(trial, nansum(task.payoff(trial,:))+1);
+    % countdown text
+    DrawFormattedText(w, [
+        countdown_text ...
+        ], 'center', 'center', white, [], [], [], 1.6);
 
     % saving the data every trial
     save([init.data_file_path sl 'task'], 'task', '-v6');
@@ -1180,7 +693,6 @@ RestrictKeysForKbCheck([]);
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % 9 - calculate ticket sum and do final save of the data
-task.ticket_sum = nansum(task.tick(1:trials, 7));
 save([init.data_file_path sl 'task'], 'task', '-v6');
 
 % -----------------------------------------------------------------------------
@@ -1194,7 +706,6 @@ Screen('TextSize', w, init.textsize);
 Screen(w, 'FillRect', black);
 DrawFormattedText(w, [
     'You finished the game - good job!' '\n\n' ...
-    'You earned ' num2str(task.ticket_sum) ' tickets!' ...
     ], 'center', 'center', white);
 Screen(w, 'Flip');
 WaitSecs(init.pause_to_read);
