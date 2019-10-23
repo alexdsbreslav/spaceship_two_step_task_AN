@@ -24,13 +24,6 @@ textsize = 40;
 textsize_feedback = 50;
 textsize_tickets = 140;
 
-% loading bar formatting
-load_bar_dimensions = [400, 15];
-
-% iti distributions N~(mean, sd)
-win_iti = [5, 0.5];
-loss_iti = [3, 0.5];
-
 % ----------------------------defaults for testing------------------------------
 % ------------------------------------------------------------------------------
 if test == 1
@@ -41,7 +34,8 @@ if test == 1
     if testing_on_mac == 1
         file_root = '/Users/alex/OneDrive - Duke University/1_research/3_mdt_ants/6_raw_data'; % this is set up to use on Alex's personal computer
         sl = '/'; % Mac convention for the slashes
-        input_source = 6; % internal keyboard (5); external keyboard (6)
+        keyboards = GetKeyboardIndices;
+        input_source = keyboards(2); % internal keyboard (1); external keyboard (2)
     else
         file_root = 'NEED FILE ROOT';                                                           % <--------- NEED INPUT
         sl = '\'; % PC convention for slashes
@@ -53,7 +47,7 @@ if test == 1
        confirm = input(['\n\n' ...
        'You are running in test mode. Here are the options currently selected:' '\n\n' ...
         num2str(testing_on_mac) ' | 1 = Mac (OSX), 0 = PC (Windows)'  '\n' ...
-        num2str(input_source) ' | 0 = Internal (or USB) Keyboard, 1 = Touchscreen, 6 = Bluetooth Keyboard'  '\n' ...
+        num2str(input_source)  '\n' ...
         'Practice trials: ' num2str(num_trials_practice) '\n' ...
         'Task trials: ' num2str(num_trials_main_task) '\n' ...
         'Collecting screenshots on? ' num2str(img_collect_on) '\n\n' ...
@@ -79,7 +73,7 @@ else
 % ------------------------------------------------------------------------------
     num_trials_practice = 10; % number of trials in the practice round
     num_trials_main_task = 150; % number of trials in the main task
-    file_root = 'NEED FILE ROOT'                                                           % <--------- NEED INPUT
+    file_root = 'NEED FILE ROOT';                                                           % <--------- NEED INPUT
     sl = '\'; % PC convention for slashes
     input_source = 0; % keyboard (input_source = 1 for touchscreen)
 end
@@ -98,11 +92,10 @@ FlushEvents;
 sub = input('subject id: ');
 
 % get the visit name
-visit = 99
+visit = 99;
 while isempty(visit) || ~ismember(visit, [1 2 3])
-    sub_exists = input(['\n\n' ...
-    'Subject' filename_subnum ' does not have food rankings yet.' '\n' ...
-    'Do you want to enter a new subject number?' '\n\n' ...
+    visit = input(['\n\n' ...
+    'Which visit is this?' '\n' ...
      '1 = Baseline visit.' '\n' ...
      '2 = Post single session visit.' '\n' ...
      '3 = Post case series visits.' '\n' ...
@@ -115,17 +108,17 @@ end
 
 % recode the visit name
 if visit == 1
-    visit = '1_baseline'
+    visit = '1_baseline';
 elseif visit == 2
-    visit = '2_post_single_session'
+    visit = '2_post_single_session';
 else
-    visit = '3_post_case_series'
+    visit = '3_post_case_series';
 end
 
 % create subject folder in the raw data folder
 filename_subnum = pad(num2str(sub), 4, 'left', '0');
 data_file_path = [file_root sl visit sl 'sub' filename_subnum];
-directory = exist(data_file_path); % check if the directory already exists
+directory = exist(data_file_path, 'dir'); % check if the directory already exists
 
 % if the directory doesn't exist, they haven't done the food rankings yet
 if directory == 0
@@ -133,10 +126,11 @@ if directory == 0
     'ERROR: This subject has not completed their food rankings yet.'])
     sca;
     return
+end
 
 % check if the subject already has an init.mat file
-sub_intialized = exist(data_file_path sl 'init.mat')
-if sub_intialized == 7
+sub_intialized = exist([data_file_path sl 'init.mat']);
+if sub_intialized == 2
     sub_exists = 99;
     while isempty(sub_exists) || ~ismember(sub_exists, [0 1])
         sub_exists = input(['\n\n' ...
@@ -216,8 +210,8 @@ elseif sub_exists == 0
             '1 = Re-initialize the subject''s data (this completely starts over)' '\n' ...
             '2 = Tutorial' '\n' ...
             '3 = Practice Game' '\n' ...
-            '4 = Block 1 (' init.block(1) ')' '\n' ...
-            '5 = Block 1 (' init.block(2) ')' '\n' ...
+            '4 = Block 1 (' init.block{2} ')' '\n' ...
+            '5 = Block 2 (' init.block{3} ')' '\n' ...
             'Response: ']);
 
             if isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5])
@@ -237,7 +231,7 @@ else
     start_where = 1;
 end
 
-if start_where <= 1;
+if start_where <= 1
     init = struct;
 
     % Identify the researcher
@@ -350,29 +344,29 @@ else
     load([data_file_path sl 'init.mat']);
 end
 
-% start the tutorial
-if start_where <= 2
-    exit_flag = tutorial(init);
-
-    if exit_flag == 1
-        disp('The script was exited because ESCAPE was pressed')
-        sca; return
-    end
-end
-
-% start the practice trials
-if start_where <= 3
-    exit_flag = practice_trials(init, init.num_trials(1), init.block(1));
-
-    if exit_flag == 1
-        disp('The script was exited because ESCAPE was pressed')
-        sca; return
-    end
-end
+% % start the tutorial
+% if start_where <= 2
+%     exit_flag = tutorial(init);
+%
+%     if exit_flag == 1
+%         disp('The script was exited because ESCAPE was pressed')
+%         sca; return
+%     end
+% end
+%
+% % start the practice trials
+% if start_where <= 3
+%     exit_flag = practice_trials(init, init.num_trials(1), init.block(1));
+%
+%     if exit_flag == 1
+%         disp('The script was exited because ESCAPE was pressed')
+%         sca; return
+%     end
+% end
 
 % start the first block
 if start_where <= 4
-    exit_flag = main_task(init, init.num_trials(2), init.block(2));
+    exit_flag = main_task(init, init.num_trials(2), init.block{2});
 
     if exit_flag == 1
         disp('The script was exited because ESCAPE was pressed')
@@ -381,18 +375,11 @@ if start_where <= 4
 end
 
 if start_where <= 5
-    exit_flag = main_task(init, init.num_trials(2), init.block(3));
+    exit_flag = main_task(init, init.num_trials(2), init.block{3});
 
     if exit_flag == 1
         disp('The script was exited because ESCAPE was pressed')
         sca; return
     end
 end
-
-% --- display winnings
-load([data_file_path sl 'task.mat']);
-task_func.output_for_food_choice(init);
-disp([fprintf('\n\n\n') ...
-'The participant earned ' num2str(task.ticket_sum) ' tickets'])
-
 end
