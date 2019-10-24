@@ -27,15 +27,8 @@ if init.test == 0
 end
 PsychDefaultSetup(1);
 
-% ---- Screen selection
-screens = Screen('Screens'); %count the screen
-whichScreen = max(screens); %select the screen; ALTERED THIS BECAUSE IT KEPT SHOWING UP ON MY LAPTOP INSTEAD OF THE ATTACHED MONITOR
-if init.test == 0
-    [w, rect] = Screen('OpenWindow', whichScreen);
-else
-    % [w, rect] = Screen('OpenWindow', whichScreen, [], [0 0 1440 810]); % for opening into a small rectangle instead
-    [w, rect] = Screen('OpenWindow', whichScreen, [], [0 0 1920 1080]); % for opening into a small rectangle instead
-end
+% open ptb window
+[w, rect] = Screen('OpenWindow', init.pick_screen, [], init.screen_dimensions);
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------

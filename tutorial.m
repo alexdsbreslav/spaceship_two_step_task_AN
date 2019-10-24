@@ -20,49 +20,8 @@ FlushEvents;
 HideCursor;
 PsychDefaultSetup(1);
 
-% ---- stimuli set up
-% Need to define the color name
-if strcmp(char(init.stim_color_step1(1)), 'blue') == 1
-    step1_color = 'blue';
-else
-    step1_color = 'orange';
-end
-
-if strcmp(char(init.stim_step2_color_select(1)), 'warm') == 1
-    if strcmp(char(init.stim_colors_step2(1)), 'red_purple') == 1
-        state2_color = 'red';
-        state2_name = 'Rigel';
-        state3_color = 'purple';
-        state3_name = 'Pentarus';
-    else
-        state2_color = 'yellow';
-        state2_name = 'Yadera';
-        state3_color = 'green';
-        state3_name = 'Gaspar';
-    end
-else
-    if strcmp(char(init.stim_colors_step2(1)), 'red_purple') == 1
-        state2_color = 'purple';
-        state2_name = 'Pentarus';
-        state3_color = 'red';
-        state3_name = 'Rigel';
-    else
-        state2_color = 'green';
-        state2_name = 'Gaspar';
-        state3_color = 'yellow';
-        state3_name = 'Yadera';
-    end
-end
-
-% ---- Screen selection
-screens = Screen('Screens'); %count the screen
-whichScreen = max(screens); %select the screen; ALTERED THIS BECAUSE IT KEPT SHOWING UP ON MY LAPTOP INSTEAD OF THE ATTACHED MONITOR
-if init.test == 0
-    [w, rect] = Screen('OpenWindow', whichScreen);
-else
-    % [w, rect] = Screen('OpenWindow', whichScreen, [], [0 0 1440 810]); % for opening into a small rectangle instead
-    [w, rect] = Screen('OpenWindow', whichScreen, [], [0 0 1920 1080]); % for opening into a small rectangle instead
-end
+% open ptb window
+[w, rect] = Screen('OpenWindow', init.pick_screen, [], init.screen_dimensions);
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -71,13 +30,13 @@ end
 % 2 - Define image locations and stimuli used across blocks
 
 % ---- display coordinates setup
-r = [0,0,800,600]; %stimuli rectangle
-r_small = [0,0,600,400]; % smaller rect for stimuli and rewards
-rc_small = [0,0,600,425];
-r_space = [0,0,1920,1080];
-r_ship = [0,0,400,290];
-r_tick_text = [0,0,300,150];
-r_txt_bg = [0,0,1550,75];
+r = [0,0,800,600]*init.scale_stim; %stimuli rectangle
+r_small = [0,0,600,400]*init.scale_stim; % smaller rect for stimuli and rewards
+rc_small = [0,0,600,425]*init.scale_stim;
+r_space = [0,0,1920,1080]*init.scale_background;
+r_ship = [0,0,400,290]*init.scale_stim;
+r_tick_text = [0,0,300,150]*init.scale_stim;
+r_txt_bg = [0,0,1550,75]*init.scale_stim;
 rects = cell(2,2); % rectangles for touchscreen
 
 % ---- tutorial locations
@@ -198,6 +157,42 @@ space = Screen('MakeTexture', w, space);
 planet_home = Screen('MakeTexture', w, planet_home);
 planet_2 = Screen('MakeTexture', w, planet_2);
 planet_3 = Screen('MakeTexture', w, planet_3);
+
+if strcmp(char(init.stim_step2_color_select(1)), 'warm') == 1
+    if strcmp(char(init.stim_colors_step2(block_idx)), 'red_blue') == 1
+        state2_color = 'red';
+        state2_name = 'Rigel';
+        state3_color = 'blue';
+        state3_name = 'Benzar';
+    elseif strcmp(char(init.stim_colors_step2(block_idx)), 'orange_purple') == 1
+        state2_color = 'orange';
+        state2_name = 'Omicron';
+        state3_color = 'purple';
+        state3_name = 'Pentarus';
+    else
+        state2_color = 'yellow';
+        state2_name = 'Yadera';
+        state3_color = 'green';
+        state3_name = 'Gaspar';
+    end
+else
+    if strcmp(char(init.stim_colors_step2(block_idx)), 'red_blue') == 1
+        state2_color = 'blue';
+        state2_name = 'Benzar';
+        state3_color = 'red';
+        state3_name = 'Rigel';
+    elseif strcmp(char(init.stim_colors_step2(block_idx)), 'orange_purple') == 1
+        state2_color = 'purple';
+        state2_name = 'Pentarus';
+        state3_color = 'orange';
+        state3_name = 'Omicron';
+    else
+        state2_color = 'green';
+        state2_name = 'Gaspar';
+        state3_color = 'yellow';
+        state3_name = 'Yadera';
+    end
+end
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------

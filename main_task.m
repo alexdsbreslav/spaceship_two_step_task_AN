@@ -27,15 +27,8 @@ if init.test == 0
 end
 PsychDefaultSetup(1);
 
-% Screen selection
-screens = Screen('Screens'); %count the screen
-whichScreen = max(screens); %select the screen;
-if init.test == 0
-    [w, rect] = Screen('OpenWindow', whichScreen);
-else
-    % [w, rect] = Screen('OpenWindow', whichScreen, [], [0 0 1440 810]); % for opening into a small rectangle instead
-    [w, rect] = Screen('OpenWindow', whichScreen, [], [0 0 1920 1080]); % for opening into a small rectangle instead
-end
+% open ptb window
+[w, rect] = Screen('OpenWindow', init.pick_screen, [], init.screen_dimensions);
 
 % if we are starting the task from the middle, then we just want to load the structure
 if isfile([init.data_file_path init.slash_convention 'task.mat'])
@@ -81,14 +74,14 @@ save([init.data_file_path sl block], 'task', '-v6');
 % 2 - Define image locations and stimuli used across blocks
 
 % ---- display coordinates setup
-r = [0,0,800,600]; %stimuli rectangle
-r_small = [0,0,600,400]; % smaller rect for stimuli and rewards
-rc_small = [0,0,600,425];
-r_space = [0,0,1920,1080];
-r_ship = [0,0,400,290];
-r_tick_text = [0,0,300,150];
+r = [0,0,800,600]*init.scale_stim; %stimuli rectangle
+r_small = [0,0,600,400]*init.scale_stim; % smaller rect for stimuli and rewards
+rc_small = [0,0,600,425]*init.scale_stim;
+r_space = [0,0,1920,1080]*init.scale_background;
+r_ship = [0,0,400,290]*init.scale_stim;
+r_tick_text = [0,0,300,150]*init.scale_stim;
 rects = cell(2,2); % rectangles for touchscreen
-r_txt_bg = [0,0,1550,75];
+r_txt_bg = [0,0,1550,75]*init.scale_stim;
 
 % ---- text rectangles for intro
 txt_bg = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.9);
@@ -215,10 +208,10 @@ else
         state3_color = 'orange';
         state3_name = 'Omicron';
     else
-        state2_color = 'yellow';
-        state2_name = 'Yadera';
-        state3_color = 'green';
-        state3_name = 'Gaspar';
+        state2_color = 'green';
+        state2_name = 'Gaspar';
+        state3_color = 'yellow';
+        state3_name = 'Yadera';
     end
 end
 % -----------------------------------------------------------------------------

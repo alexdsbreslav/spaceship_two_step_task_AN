@@ -19,35 +19,25 @@ researchers_text = ['\n\n' ...
   '2 = Other' '\n' ...
   'Response: ' ]; % the list and index numbers above need to match the text here perfectly!
 
-% Text formatting specifications
+% text formatting specifications
 textsize = 40;
 textsize_feedback = 50;
 textsize_tickets = 140;
 
+% screen dimensions for the test computer
+test_screen_width = 1440;
+test_screen_height = 900;
+
 % ----------------------------defaults for testing------------------------------
 % ------------------------------------------------------------------------------
 if test == 1
-    testing_on_mac = 1; % testing on the PC, not mac (testing_on_mac = 1 for mac)
     num_trials_practice = 2;
     num_trials_main_task = 2;
-
-    if testing_on_mac == 1
-        file_root = '/Users/alex/OneDrive - Duke University/1_research/3_mdt_ants/6_raw_data'; % this is set up to use on Alex's personal computer
-        sl = '/'; % Mac convention for the slashes
-        keyboards = GetKeyboardIndices;
-        input_source = keyboards(2); % internal keyboard (1); external keyboard (2)
-    else
-        file_root = 'NEED FILE ROOT';                                                           % <--------- NEED INPUT
-        sl = '\'; % PC convention for slashes
-        input_source = 0; % keyboard
-    end
 
     confirm = 99;
     while isempty(confirm) || ~ismember(confirm, [0 1])
        confirm = input(['\n\n' ...
        'You are running in test mode. Here are the options currently selected:' '\n\n' ...
-        num2str(testing_on_mac) ' | 1 = Mac (OSX), 0 = PC (Windows)'  '\n' ...
-        num2str(input_source)  '\n' ...
         'Practice trials: ' num2str(num_trials_practice) '\n' ...
         'Task trials: ' num2str(num_trials_main_task) '\n' ...
         'Collecting screenshots on? ' num2str(img_collect_on) '\n\n' ...
@@ -71,11 +61,8 @@ if test == 1
 else
 % ----------------------------defaults for experiment---------------------------
 % ------------------------------------------------------------------------------
-    num_trials_practice = 10; % number of trials in the practice round
+    num_trials_practice = 15; % number of trials in the practice round
     num_trials_main_task = 150; % number of trials in the main task
-    file_root = 'NEED FILE ROOT';                                                           % <--------- NEED INPUT
-    sl = '\'; % PC convention for slashes
-    input_source = 0; % keyboard (input_source = 1 for touchscreen)
 end
 
 % ------------------------------------------------------------------------------
@@ -87,6 +74,39 @@ end
 % clear everything from the workspace
 Screen('CloseAll');
 FlushEvents;
+
+% determine operating system
+if ismac == 1
+    sl = '/'; % Mac convention for the slashes
+else
+    sl = '\'; % PC convention for slashes
+end
+
+% get file path
+directory = fileparts(pwd);
+file_root = [directory sl 'raw_data'];
+
+% get the keyboard
+keyboards = GetKeyboardIndices;
+input_source = keyboards(2); % internal keyboard (1); external keyboard (2)
+
+% get the parameters for the monitor
+num_screens = Screen('Screens'); %count the screen
+pick_screen = max(num_screens); %select the screen;
+[screen_width, screen_height] = Screen('WindowSize', pick_screen);
+stimuli_designed_for_screen_width = 1920;
+stimuli_designed_for_screen_height = 1080;
+
+% this is checking for Alex's home setup; if testing here, set screen width to test computer
+if screen_width == 2560 && screen_height == 1440;
+    screen_width = test_screen_width;
+    screen_height = test_screen_height;
+end
+
+% rescale the stimulus if the monitor is less than 1920x1080
+scale_stim = min([screen_width/stimuli_designed_for_screen_width screen_height/stimuli_designed_for_screen_height]);
+scale_background = max([screen_width/stimuli_designed_for_screen_width screen_height/stimuli_designed_for_screen_height]);
+
 
 % get the subject number as a string
 sub = input('subject id: ');
@@ -255,6 +275,12 @@ if start_where <= 1
     % save whether this is a test or not
     init.test = test;
     init.input_source = input_source;
+
+    % save specs for opening ptb windows
+    init.pick_screen = pick_screen;
+    init.screen_dimensions = [0 0 screen_width screen_height];
+    init.scale_stim = scale_stim;
+    init.scale_background = scale_background;
 
     % shuffle the rng and save the seed
     rng('shuffle');
