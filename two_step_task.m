@@ -1,7 +1,7 @@
 % Please do not share or use this code without my written permission.
 % Author: Alex Breslav
 
-function exit_flag = main_task(init, trials, block)
+function exit_flag = two_step_task(init, trials, block)
 
 % Initial setup
 format shortg
@@ -142,20 +142,20 @@ else
 end
 
 % --- spaceships
-  A1 = imread(['stimuli' sl 'spaceships' sl ...
-     char(init.spaceships(spaceship_idx(1))) sl 'docked.png'],'png');
-  B1 = imread(['stimuli' sl 'spaceships' sl ...
-     char(init.spaceships(spaceship_idx(2))) sl 'docked.png'],'png');
+A1 = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(1))) sl 'docked.png'],'png');
+B1 = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(2))) sl 'docked.png'],'png');
 
-  A1_out = imread(['stimuli' sl 'spaceships' sl ...
-     char(init.spaceships(spaceship_idx(1))) sl 'out.png'],'png');
-  A1_return = imread(['stimuli' sl 'spaceships' sl ...
-     char(init.spaceships(spaceship_idx(1))) sl 'return.png'],'png');
+A1_out = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(1))) sl 'out.png'],'png');
+A1_return = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(1))) sl 'return.png'],'png');
 
-  B1_out = imread(['stimuli' sl 'spaceships' sl ...
-     char(init.spaceships(spaceship_idx(2))) sl 'out.png'],'png');
-  B1_return = imread(['stimuli' sl 'spaceships' sl ...
-     char(init.spaceships(spaceship_idx(2))) sl 'return.png'],'png');
+B1_out = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(2))) sl 'out.png'],'png');
+B1_return = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(2))) sl 'return.png'],'png');
 
 % ---- aliens
 A2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx)) sl char(init.stim_step2_color_select(1)) sl ...
@@ -178,42 +178,8 @@ space = Screen('MakeTexture', w, space);
 planet_home = Screen('MakeTexture', w, planet_home);
 planet_2 = Screen('MakeTexture', w, planet_2);
 planet_3 = Screen('MakeTexture', w, planet_3);
+[state2_color, state2_name, state3_color, state3_name] = task_func.get_planet_text(init)
 
-if strcmp(char(init.stim_step2_color_select(1)), 'warm') == 1
-    if strcmp(char(init.stim_colors_step2(block_idx)), 'red_blue') == 1
-        state2_color = 'red';
-        state2_name = 'Rigel';
-        state3_color = 'blue';
-        state3_name = 'Benzar';
-    elseif strcmp(char(init.stim_colors_step2(block_idx)), 'orange_purple') == 1
-        state2_color = 'orange';
-        state2_name = 'Omicron';
-        state3_color = 'purple';
-        state3_name = 'Pentarus';
-    else
-        state2_color = 'yellow';
-        state2_name = 'Yadera';
-        state3_color = 'green';
-        state3_name = 'Gaspar';
-    end
-else
-    if strcmp(char(init.stim_colors_step2(block_idx)), 'red_blue') == 1
-        state2_color = 'blue';
-        state2_name = 'Benzar';
-        state3_color = 'red';
-        state3_name = 'Rigel';
-    elseif strcmp(char(init.stim_colors_step2(block_idx)), 'orange_purple') == 1
-        state2_color = 'purple';
-        state2_name = 'Pentarus';
-        state3_color = 'orange';
-        state3_name = 'Omicron';
-    else
-        state2_color = 'green';
-        state2_name = 'Gaspar';
-        state3_color = 'yellow';
-        state3_name = 'Yadera';
-    end
-end
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -240,103 +206,114 @@ Screen('TextSize', w, init.textsize);
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
-% 7 - Task intro screens
-if init.trials_start == 1 % only show the into screens if we're starting from trial 1
-    type = 0;
-    picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,1);
-    picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,1);
+% intro screen for practice block
+if strcmp(block,'practice')
     DrawFormattedText(w,[
-        'Welcome Space Captain,' '\n\n' ...
-        'We are sending you on a 150 day quest to' '\n' ...
-        'find as much space treasure as you can.' ...
+        'Let''s practice!' '\n\n' ...
+        'When you are ready, ' init.researcher ' will start the training quest.' '\n' ...
+        'You will have ' num2str(trials) ' days to explore this galaxy.'....
         ], 'center','center', white, [], [], [], 1.6);
-    Screen('Flip',w);
-    WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    task_func.advance_screen(init.input_source);
-
-    Screen('DrawTexture', w, planet_home, [], space_bg);
-    Screen('DrawTexture', w, picL, [], alien_Lpoint);
-    Screen('DrawTexture', w, picR, [], alien_Rpoint);
-    Screen('FrameRect',w,frame_color,alien_Lframe,10);
-    Screen('FrameRect',w,frame_color,alien_Rframe,10);
-    Screen('FillRect', w, black, txt_bg);
-    DrawFormattedText(w,[
-        'We have given you two new spaceships to explore a new galaxy.'
-        ],'center','center', white, [], [], [], 1.6, [], txt_bg);
-    Screen('Flip',w);
-    WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    task_func.advance_screen(init.input_source);
-
-    Screen('DrawTexture', w, space, [], space_bg);
-    Screen('FillRect', w, black, txt_bg_center);
-    DrawFormattedText(w,[
-        'This galaxy is home to Planet ' state2_name ' and Planet ' state3_name '.' ...
-        ], 'center','center', white, [], [], [], 1.6);
-    Screen('Flip',w);
-    WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    task_func.advance_screen(init.input_source);
-
-    picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,2);
-    picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,2);
-
-    Screen('DrawTexture', w, planet_2, [], space_bg);
-    Screen('DrawTexture', w, picL, [], alien_Lpoint);
-    Screen('DrawTexture', w, picR, [], alien_Rpoint);
-    Screen('FrameRect',w,white,alien_Lframe,10);
-    Screen('FrameRect',w,white,alien_Rframe,10);
-    Screen('FillRect', w, black, txt_bg);
-    DrawFormattedText(w,[
-        'The ' state2_color ' aliens live on Planet ' state2_name '.'...
-        ],'center','center', white, [], [], [], 1.6, [], txt_bg);
-    Screen('Flip',w);
-    WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    task_func.advance_screen(init.input_source);
-
-    picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,3);
-    picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,3);
-
-    Screen('DrawTexture', w, planet_3, [], space_bg);
-    Screen('DrawTexture', w, picL, [], alien_Lpoint);
-    Screen('DrawTexture', w, picR, [], alien_Rpoint);
-    Screen('FrameRect',w,white,alien_Lframe,10);
-    Screen('FrameRect',w,white,alien_Rframe,10);
-    Screen('FillRect', w, black, txt_bg);
-    DrawFormattedText(w,[
-        'The ' state3_color ' aliens live on Planet ' state3_name '.'...
-        ],'center','center', white, [], [], [], 1.6, [], txt_bg);
-    Screen('Flip',w);
-    WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    task_func.advance_screen(init.input_source);
-
-    DrawFormattedText(w,[
-        'Remember your training, Space Captain!' '\n' ...
-        'All of the rules from the training quest are the same in this quest.' ...
-        ],'center','center', white, [], [], [], 1.6);
-    Screen('Flip',w);
-    WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    task_func.advance_screen(init.input_source);
-
-    DrawFormattedText(w,[
-        'Before you start your quest, what questions do you have for ' init.researcher '?' ...
-        ],'center','center', white, [], [], [], 1.6);
-    Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    WaitSecs(init.pause_to_read);
-    task_func.advance_screen(init.input_source);
-
-    DrawFormattedText(w,[
-        'When you are ready, ' init.researcher ' will start the big quest.' ...
-        ],'center','center', white, [], [], [], 1.6);
-    Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-    WaitSecs(init.pause_to_read);
-    task_func.advance_screen(init.input_source);
+    Screen('Flip',w); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+    task_func.advance_screen(init.input_source)
 else
-  DrawFormattedText(w,[
-      'When you are ready, ' init.researcher ' will start your big quest.' '\n'...
-      'You will start right where you left off!' '\n'...
-      ],'center','center', white, [], [], [], 1.6);
-  Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-  WaitSecs(init.pause_to_read);
-  task_func.advance_screen(init.input_source);
+    % intro screens for food and money blocks
+    if init.trials_start == 1 % only show the into screens if we're starting from trial 1
+        type = 0;
+        picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,1);
+        picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,1);
+        DrawFormattedText(w,[
+            'Welcome Space Captain,' '\n\n' ...
+            'We are sending you on a ' num2str(trials) ' day quest to' '\n' ...
+            'find as much space treasure as you can.' ...
+            ], 'center','center', white, [], [], [], 1.6);
+        Screen('Flip',w);
+        WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        task_func.advance_screen(init.input_source);
+
+        Screen('DrawTexture', w, planet_home, [], space_bg);
+        Screen('DrawTexture', w, picL, [], alien_Lpoint);
+        Screen('DrawTexture', w, picR, [], alien_Rpoint);
+        Screen('FrameRect',w,frame_color,alien_Lframe,10);
+        Screen('FrameRect',w,frame_color,alien_Rframe,10);
+        Screen('FillRect', w, black, txt_bg);
+        DrawFormattedText(w,[
+            'We have given you two new spaceships to explore a new galaxy.'
+            ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+        Screen('Flip',w);
+        WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        task_func.advance_screen(init.input_source);
+
+        Screen('DrawTexture', w, space, [], space_bg);
+        Screen('FillRect', w, black, txt_bg_center);
+        DrawFormattedText(w,[
+            'This galaxy is home to Planet ' state2_name ' and Planet ' state3_name '.' ...
+            ], 'center','center', white, [], [], [], 1.6);
+        Screen('Flip',w);
+        WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        task_func.advance_screen(init.input_source);
+
+        picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,2);
+        picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,2);
+
+        Screen('DrawTexture', w, planet_2, [], space_bg);
+        Screen('DrawTexture', w, picL, [], alien_Lpoint);
+        Screen('DrawTexture', w, picR, [], alien_Rpoint);
+        Screen('FrameRect',w,white,alien_Lframe,10);
+        Screen('FrameRect',w,white,alien_Rframe,10);
+        Screen('FillRect', w, black, txt_bg);
+        DrawFormattedText(w,[
+            'The ' state2_color ' aliens live on Planet ' state2_name '.'...
+            ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+        Screen('Flip',w);
+        WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        task_func.advance_screen(init.input_source);
+
+        picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,3);
+        picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,3);
+
+        Screen('DrawTexture', w, planet_3, [], space_bg);
+        Screen('DrawTexture', w, picL, [], alien_Lpoint);
+        Screen('DrawTexture', w, picR, [], alien_Rpoint);
+        Screen('FrameRect',w,white,alien_Lframe,10);
+        Screen('FrameRect',w,white,alien_Rframe,10);
+        Screen('FillRect', w, black, txt_bg);
+        DrawFormattedText(w,[
+            'The ' state3_color ' aliens live on Planet ' state3_name '.'...
+            ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+        Screen('Flip',w);
+        WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        task_func.advance_screen(init.input_source);
+
+        DrawFormattedText(w,[
+            'Remember your training, Space Captain!' '\n' ...
+            'All of the rules from the training quest are the same in this quest.' ...
+            ],'center','center', white, [], [], [], 1.6);
+        Screen('Flip',w);
+        WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        task_func.advance_screen(init.input_source);
+
+        DrawFormattedText(w,[
+            'Before you start your quest, what questions do you have for ' init.researcher '?' ...
+            ],'center','center', white, [], [], [], 1.6);
+        Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        WaitSecs(init.pause_to_read);
+        task_func.advance_screen(init.input_source);
+
+        DrawFormattedText(w,[
+            'When you are ready, ' init.researcher ' will start the big quest.' ...
+            ],'center','center', white, [], [], [], 1.6);
+        Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        WaitSecs(init.pause_to_read);
+        task_func.advance_screen(init.input_source);
+    else
+      DrawFormattedText(w,[
+          'When you are ready, ' init.researcher ' will start your big quest.' '\n'...
+          'You will start right where you left off!' '\n'...
+          ],'center','center', white, [], [], [], 1.6);
+      Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+      WaitSecs(init.pause_to_read);
+      task_func.advance_screen(init.input_source);
+    end
 end
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -699,15 +676,25 @@ save([init.data_file_path sl block], 'task', '-v6');
 % -----------------------------------------------------------------------------
 % 9 - Payoff screens
 % ---- Practice block end screens
-Screen('TextSize', w, init.textsize);
-
-Screen(w, 'FillRect', black);
-DrawFormattedText(w, [
-    'You finished the game - good job!' '\n\n' ...
-    ], 'center', 'center', white);
-Screen(w, 'Flip');
-WaitSecs(init.pause_to_read);
-task_func.advance_screen(init.input_source)
+if strcmp(block,'practice')
+    Screen('TextSize', w, init.textsize);
+    Screen(w, 'FillRect', black);
+    DrawFormattedText(w,[
+        'Congratulations Space Captain, you are done with the training quest!' ...
+        ],'center','center', white, [], [], [], 1.6);
+    Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+    WaitSecs(init.pause_to_read);
+    task_func.advance_screen(init.input_source);
+else
+    Screen('TextSize', w, init.textsize);
+    Screen(w, 'FillRect', black);
+    DrawFormattedText(w, [
+        'You finished the game - good job!' '\n\n' ...
+        ], 'center', 'center', white);
+    Screen(w, 'Flip');
+    WaitSecs(init.pause_to_read);
+    task_func.advance_screen(init.input_source)
+end
 
 ShowCursor;
 Screen('CloseAll');

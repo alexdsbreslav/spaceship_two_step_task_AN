@@ -1,5 +1,6 @@
 classdef task_func
     methods(Static)
+% -----------------------------------------------------------------------------
         function f = drawimage(w, A1, B1, A2, B2, A3, B3, type, state)
             if state == 1
 
@@ -38,30 +39,6 @@ classdef task_func
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
-        function f = drawrewards(w, condition, snacks, stickers, tickets, type)
-            if strcmp(condition, 'food')
-
-                if type == 0
-                  X = snacks;
-                else
-                  X = tickets;
-                end
-
-            else
-                if type == 0
-                  X = stickers;
-                else
-                  X = tickets;
-                end
-            end
-
-            f = Screen('MakeTexture', w, X);
-        end
-
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
         function f = drawspaceship(w, A1_out, A1_return, B1_out, B1_return, type, direction)
             if type == 0
                 if strcmp(direction, 'out')
@@ -78,171 +55,6 @@ classdef task_func
             end
 
             f = Screen('MakeTexture', w, X);
-        end
-
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-        function [pull, check_trial]  = pull_ticket(m, r, trial, checks)
-
-            if (nnz(checks) < 2) || ...
-               (trial >= 30 && trial < 60 && nnz(checks) < 4) || ...
-               (trial >= 60 && trial < 90 && nnz(checks) < 6) || ...
-               (trial >= 90 && trial < 120 && nnz(checks) < 8) || ...
-               (trial >= 120 && nnz(checks) < 10)
-
-                if checks(trial) ~= 0
-                    check_trial = checks(trial)*-1;
-                    pull = round(m + check_trial*15);
-                else
-                    check_trial = randi([-1 1]);
-                    if check_trial == 0
-                        pull = randi([round(m - r), round(m + r)]);
-                    else
-                        pull = round(m + check_trial*15);
-                    end
-                end
-            else
-                pull = randi([round(m - r), round(m + r)]);
-                check_trial = 0;
-            end
-
-            if pull < 1
-                pull = 1;
-            end
-        end
-
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-        function countdown_text = rewards_text(condition, block, trial, trials, win, action, ticks)
-            if block == 1
-                if strcmp(condition, 'food')
-                    if win == 1
-                        if action == 0
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Collect your snack!'];
-                            elseif trial == (trials/5) || trial == (2*trials/5) || trial == (3*trials/5) || trial == (4*trials/5)
-                                countdown_text = ['A break will begin shortly...' '\n' ...
-                                'Collect your snack!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Collect your snack!'];
-                            end
-                        else
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            elseif trial == (trials/5) || trial == (2*trials/5) || trial == (3*trials/5) || trial == (4*trials/5)
-                                countdown_text = ['A break will begin shortly...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            end
-                        end
-                    else
-                        if trial == trials
-                            countdown_text = 'The quest will end shortly...';
-                        elseif trial == (trials/5) || trial == (2*trials/5) || trial == (3*trials/5) || trial == (4*trials/5)
-                            countdown_text = 'A break will begin shortly...';
-                        else
-                            countdown_text = 'Returning Home...';
-                        end
-                    end
-                else
-                    if win == 1
-                        if action == 0
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Collect a sticker or tattoo!'];
-                            elseif trial == (trials/5) || trial == (2*trials/5) || trial == (3*trials/5) || trial == (4*trials/5)
-                                countdown_text = ['A break will begin shortly...' '\n' ...
-                                'Collect a sticker or tattoo!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Collect a sticker or tattoo!'];
-                            end
-                        else
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            elseif trial == (trials/5) || trial == (2*trials/5) || trial == (3*trials/5) || trial == (4*trials/5)
-                                countdown_text = ['A break will begin shortly...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            end
-                        end
-                    else
-                        if trial == trials
-                            countdown_text = 'The quest will end shortly...';
-                        elseif trial == (trials/5) || trial == (2*trials/5) || trial == (3*trials/5) || trial == (4*trials/5)
-                            countdown_text = 'A break will begin shortly...';
-                        else
-                            countdown_text = 'Returning Home...';
-                        end
-                    end
-                end
-            else
-                if strcmp(condition, 'food')
-                    if win == 1
-                        if action == 0
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Collect your snack!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Collect your snack!'];
-                            end
-                        else
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            end
-                        end
-                    else
-                        if trial == trials
-                            countdown_text = 'The quest will end shortly...';
-                        else
-                            countdown_text = 'Returning Home...';
-                        end
-                    end
-                else
-                    if win == 1
-                        if action == 0
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Collect a sticker or tattoo!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Collect a sticker or tattoo!'];
-                            end
-                        else
-                            if trial == trials
-                                countdown_text = ['The quest will end shortly...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            else
-                                countdown_text = ['Returning Home...' '\n' ...
-                                'Adding ' num2str(ticks) ' tickets to your total!'];
-                            end
-                        end
-                    else
-                        if trial == trials
-                            countdown_text = 'The quest will end shortly...';
-                        else
-                            countdown_text = 'Returning Home...';
-                        end
-                    end
-                end
-            end
         end
 
 % -----------------------------------------------------------------------------
@@ -343,40 +155,48 @@ classdef task_func
                 img_idx = img_idx + 1;
             end
         end
-
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
-        function output_for_food_choice(init)
-            data_file_path = init.data_file_path;
-            sl = init.slash_convention;
-
-            % load all of the necessary structures
-            load([data_file_path sl 'task.mat']);
-
-            % number of trials/size of the array
-            trials = init.num_trials(2);
-            df = cell(trials, 9);
-            df(:, 1) = num2cell(init.sub);
-            df(:, 2) = cellstr(init.researcher);
-            df(:, 3) = cellstr(init.condition);
-            df(:, 4) = cellstr(init.left_item);
-            df(:, 5) = cellstr(init.right_item);
-            df(:, 6) = num2cell(1:trials);
-            df(:, 7) = num2cell(nansum(task.payoff, 2));
-            df(:, 8) = num2cell((task.action(:,4) - 1)*-1);
-
-            % convert array to table
-            T = table(df(:,1), df(:,2), df(:,3), df(:,4), df(:,5), df(:,6), df(:,7), df(:,8), df(:,9), ...
-            'VariableNames', {'subject', 'researcher', 'condition', 'left_item', 'right_item', 'trial', 'win', 'choose_snack_stick', 'choose_left'});
-
-            % print table to excel
-            writetable(T, [data_file_path sl 'food_choice.xlsx']);
+        function [state2_color, state2_name, state3_color, state3_name] = get_planet_text(init)
+            if strcmp(char(init.stim_step2_color_select(1)), 'warm') == 1
+                if strcmp(char(init.stim_colors_step2(block_idx)), 'red_blue') == 1
+                    state2_color = 'red';
+                    state2_name = 'Rigel';
+                    state3_color = 'blue';
+                    state3_name = 'Benzar';
+                elseif strcmp(char(init.stim_colors_step2(block_idx)), 'orange_purple') == 1
+                    state2_color = 'orange';
+                    state2_name = 'Omicron';
+                    state3_color = 'purple';
+                    state3_name = 'Pentarus';
+                else
+                    state2_color = 'yellow';
+                    state2_name = 'Yadera';
+                    state3_color = 'green';
+                    state3_name = 'Gaspar';
+                end
+            else
+                if strcmp(char(init.stim_colors_step2(block_idx)), 'red_blue') == 1
+                    state2_color = 'blue';
+                    state2_name = 'Benzar';
+                    state3_color = 'red';
+                    state3_name = 'Rigel';
+                elseif strcmp(char(init.stim_colors_step2(block_idx)), 'orange_purple') == 1
+                    state2_color = 'purple';
+                    state2_name = 'Pentarus';
+                    state3_color = 'orange';
+                    state3_name = 'Omicron';
+                else
+                    state2_color = 'green';
+                    state2_name = 'Gaspar';
+                    state3_color = 'yellow';
+                    state3_name = 'Yadera';
+                end
+            end
         end
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
-% -----------------------------------------------------------------------------
+
 % -----------------------------------------------------------------------------
     end
 end

@@ -19,11 +19,6 @@ researchers_text = ['\n\n' ...
   '2 = Other' '\n' ...
   'Response: ' ]; % the list and index numbers above need to match the text here perfectly!
 
-% text formatting specifications
-textsize = 40;
-textsize_feedback = 50;
-textsize_tickets = 140;
-
 % screen dimensions for the test computer
 test_screen_width = 1440;
 test_screen_height = 900;
@@ -42,9 +37,9 @@ if test == 1
         'Task trials: ' num2str(num_trials_main_task) '\n' ...
         'Collecting screenshots on? ' num2str(img_collect_on) '\n\n' ...
         'Do these settings look good?' '\n'...
-         '0 = No, I need to fix something in settings.' '\n' ...
-         '1 = Yes, continue.' '\n' ...
-         'Response: ' ]);
+        '1 = Yes, continue.' '\n' ...
+        '0 = No, I need to fix something in settings.' '\n' ...
+        'Response: ' ]);
 
        if isempty(confirm) || ~ismember(confirm, [0 1])
          disp('Invalid entry, please try again.')
@@ -88,8 +83,7 @@ file_root = [directory sl 'raw_data'];
 
 % get the keyboard
 keyboards = GetKeyboardIndices;
-input_source = keyboards(2); % internal keyboard (1); external keyboard (2)
-
+input_source = keyboards(length(keyboards)); % internal keyboard (1); external keyboard (2)
 % get the parameters for the monitor
 num_screens = Screen('Screens'); %count the screen
 pick_screen = max(num_screens); %select the screen;
@@ -107,6 +101,9 @@ end
 scale_stim = min([screen_width/stimuli_designed_for_screen_width screen_height/stimuli_designed_for_screen_height]);
 scale_background = max([screen_width/stimuli_designed_for_screen_width screen_height/stimuli_designed_for_screen_height]);
 
+% text formatting specifications
+textsize = ceil(40*scale_background);
+textsize_feedback = ceil(50*scale_background);
 
 % get the subject number as a string
 sub = input('subject id: ');
@@ -328,7 +325,6 @@ if start_where <= 1
     % set the text formatting specs
     init.textsize = textsize;
     init.textsize_feedback = textsize_feedback;
-    init.textsize_tickets = textsize_tickets;
 
     % load the walk
     load(['walks.mat']);
@@ -380,19 +376,19 @@ end
 %     end
 % end
 %
-% % start the practice trials
-% if start_where <= 3
-%     exit_flag = practice_trials(init, init.num_trials(1), init.block(1));
-%
-%     if exit_flag == 1
-%         disp('The script was exited because ESCAPE was pressed')
-%         sca; return
-%     end
-% end
+% start the practice trials
+if start_where <= 3
+    exit_flag = two_step_task(init, init.num_trials(1), init.block{1});
+
+    if exit_flag == 1
+        disp('The script was exited because ESCAPE was pressed')
+        sca; return
+    end
+end
 
 % start the first block
 if start_where <= 4
-    exit_flag = main_task(init, init.num_trials(2), init.block{2});
+    exit_flag = two_step_task(init, init.num_trials(2), init.block{2});
 
     if exit_flag == 1
         disp('The script was exited because ESCAPE was pressed')
@@ -401,7 +397,7 @@ if start_where <= 4
 end
 
 if start_where <= 5
-    exit_flag = main_task(init, init.num_trials(2), init.block{3});
+    exit_flag = two_step_task(init, init.num_trials(2), init.block{3});
 
     if exit_flag == 1
         disp('The script was exited because ESCAPE was pressed')
