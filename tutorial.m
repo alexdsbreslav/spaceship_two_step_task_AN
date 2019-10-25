@@ -5,7 +5,7 @@ function exit_flag = tutorial(init)
 
 % ---- Initial set up
 % capture screenshots
-img_idx = 100;
+img_idx = 0;
 
 % sets the exit flag default to 0; throws a flag if you exit the function to leave the start function
 exit_flag = 0;

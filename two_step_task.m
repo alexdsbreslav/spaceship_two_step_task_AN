@@ -7,8 +7,11 @@ function exit_flag = two_step_task(init, trials, block)
 format shortg
 exit_flag = 0;
 
+% find the index of the block
+block_idx = find(strcmp(init.block, block));
+
 % index for capturing screenshots
-img_idx = 400;
+img_idx = block_idx*100;
 
 % file set up; enables flexibility between OSX and Windows
 sl = init.slash_convention;
@@ -34,9 +37,6 @@ PsychDefaultSetup(1);
 if isfile([init.data_file_path init.slash_convention 'task.mat'])
     load([init.data_file_path init.slash_convention 'task.mat']);
 else
-    % find the index of the block
-    block_idx = find(strcmp(init.block, block));
-
     % set up the structure to save all of the variables
     task = struct;
     task.rng_seed = rng_seed; % save the rng seed set at the top of the script
@@ -50,18 +50,17 @@ else
     task.aliens = init.aliens(block_idx+4:block_idx+7);
 
     % preallocate the variables that will be filled in
-    task.position = NaN(trials,4);
-    task.action = NaN(trials,4);
-    task.click_coord = NaN(trials, 8);
-    task.on = NaN(trials,4);
-    task.off = NaN(trials,4);
-    task.on_datetime = cell(trials,4);
-    task.off_datetime = cell(trials,4);
+    task.position = NaN(trials,3);
+    task.action = NaN(trials,3);
+    task.click_coord = NaN(trials, 6);
+    task.on = NaN(trials,3);
+    task.off = NaN(trials,3);
+    task.on_datetime = cell(trials,3);
+    task.off_datetime = cell(trials,3);
     task.rt = task.off - task.on;
     task.payoff_det = rand(trials,4);
-    task.payoff = NaN(trials,2);
+    task.payoff = NaN(trials,1);
     task.state = NaN(trials,1);
-    task.tick = zeros(trials, 8);
 end
 
 % save everything
@@ -178,7 +177,7 @@ space = Screen('MakeTexture', w, space);
 planet_home = Screen('MakeTexture', w, planet_home);
 planet_2 = Screen('MakeTexture', w, planet_2);
 planet_3 = Screen('MakeTexture', w, planet_3);
-[state2_color, state2_name, state3_color, state3_name] = task_func.get_planet_text(init)
+[state2_color, state2_name, state3_color, state3_name] = task_func.get_planet_text(init, block_idx);
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -385,6 +384,7 @@ for trial = init.trials_start:trials
     % ---- stop reaction timer
     task.off(trial,1) = GetSecs - t0;
     task.off_datetime{trial,1} = clock;
+    task.rt(trial, 1) = task.off(trial,1) - task.on(trial,1);
 
     % ---- capture selection
     [task.action(trial,1), choice_loc] = task_func.choice(type, [L,R], selection, x, y);
@@ -486,6 +486,7 @@ for trial = init.trials_start:trials
     % ---- stop reaction timer
         task.off(trial,2) = GetSecs - t0;
         task.off_datetime{trial,2} = clock;
+        task.rt(trial, 2) = task.off(trial,2) - task.on(trial,2);
 
     % ---- capture selection and determine payoff
         [task.action(trial,2), choice_loc] = task_func.choice(type, [L,R], selection, x, y);
@@ -586,6 +587,7 @@ for trial = init.trials_start:trials
     % ---- stop reaction timer
         task.off(trial,3) = GetSecs - t0;
         task.off_datetime{trial,3} = clock;
+        task.rt(trial, 3) = task.off(trial,3) - task.on(trial,3);
 
     % ---- capture selection and determine payoff
         [task.action(trial,3), choice_loc] = task_func.choice(type, [L,R], selection, x, y);
@@ -667,7 +669,7 @@ RestrictKeysForKbCheck([]);
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
-% 9 - calculate ticket sum and do final save of the data
+% 9 - final save of the data
 save([init.data_file_path sl block], 'task', '-v6');
 
 % -----------------------------------------------------------------------------
@@ -691,7 +693,7 @@ else
     DrawFormattedText(w, [
         'You finished the game - good job!' '\n\n' ...
         ], 'center', 'center', white);
-    Screen(w, 'Flip');
+    Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
     WaitSecs(init.pause_to_read);
     task_func.advance_screen(init.input_source)
 end

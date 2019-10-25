@@ -159,7 +159,7 @@ classdef task_func
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
-        function [state2_color, state2_name, state3_color, state3_name] = get_planet_text(init)
+        function [state2_color, state2_name, state3_color, state3_name] = get_planet_text(init, block_idx)
             if strcmp(char(init.stim_step2_color_select(1)), 'warm') == 1
                 if strcmp(char(init.stim_colors_step2(block_idx)), 'red_blue') == 1
                     state2_color = 'red';

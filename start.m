@@ -27,7 +27,7 @@ test_screen_height = 900;
 % ------------------------------------------------------------------------------
 if test == 1
     num_trials_practice = 2;
-    num_trials_main_task = 2;
+    num_trials_main_task = 5;
 
     confirm = 99;
     while isempty(confirm) || ~ismember(confirm, [0 1])
@@ -177,7 +177,7 @@ elseif sub_exists == 0
   % until the very end of the code for each trial.
     start_where = 99;
     % I NEED TO UPDATE ALL OF THIS TO HANDLE MULTIPLE BLOCKS
-    % I NEED TO PICK A NEW INDICATOR FOR TRIALS COMPLETE
+    % I NEED TO PICK A NEW INDICATOR FOR TRIALS COMPLETE --> length(nansum(task.off(:,2:3)))
 
     % if isfile([data_file_path sl 'init.mat']) && isfile([data_file_path sl 'practice.mat']) && isfile([data_file_path sl 'task.mat'])
     %     load([data_file_path sl 'init.mat']);
