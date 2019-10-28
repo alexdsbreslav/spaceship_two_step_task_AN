@@ -145,6 +145,14 @@ if directory == 0
     return
 end
 
+% randomize the block order for the food and money blocks
+block = randi([1,2]);
+if block == 1
+    block = {'practice' 'food' 'money'};
+else
+    block = {'practice' 'money' 'food'};
+end
+
 % check if the subject already has an init.mat file
 sub_intialized = exist([data_file_path sl 'init.mat']);
 if sub_intialized == 2
@@ -176,49 +184,89 @@ elseif sub_exists == 0
   % the number of trials with an iti_actual. I am using iti_actual as the indicator of a complete trial because it doesn't populate
   % until the very end of the code for each trial.
     start_where = 99;
-    % I NEED TO UPDATE ALL OF THIS TO HANDLE MULTIPLE BLOCKS
-    % I NEED TO PICK A NEW INDICATOR FOR TRIALS COMPLETE --> length(nansum(task.off(:,2:3)))
+    load([data_file_path sl 'init.mat']);
+    if isfile([data_file_path sl init.block{2} '.mat']) && isfile([data_file_path sl init.block{3} '.mat'])
+        load([data_file_path sl init.block{2} '.mat']);
+        block2_complete = init.num_trials(2) == nnz(nansum(task.off(:,2:3),2));
 
-    % if isfile([data_file_path sl 'init.mat']) && isfile([data_file_path sl 'practice.mat']) && isfile([data_file_path sl 'task.mat'])
-    %     load([data_file_path sl 'init.mat']);
-    %     load([data_file_path sl 'task.mat']);
-    %     if init.num_trials(2) == nnz(task.iti_actual)
-    %         while isempty(start_where) || ~ismember(start_where, [0 99])
-    %             start_where = input(['\n\n' ...
-    %             'This subject has complete data,' '\n' ...
-    %             'are you sure you want to overwrite it?' '\n\n' ...
-    %             '0 = CANCEL and restart the function' '\n' ...
-    %             '99 = Yes, I want to overwrite the data' '\n' ...
-    %             'Response: ']);
-    %
-    %             if isempty(start_where) || ~ismember(start_where, [0 99])
-    %               disp('Invalid entry, please try again.')
-    %             end
-    %         end
-    %     else
-    %         while isempty(start_where) || ~ismember(start_where, [0 5])
-    %             start_where = input(['\n\n' ...
-    %             'This subject has incomplete data for the main game.' '\n' ...
-    %             'It looks like they completed ' num2str(nnz(task.iti_actual)) ' trials.' '\n' ...
-    %             'They still have ' num2str(init.num_trials(2) - nnz(task.iti_actual)) ' to go.' '\n' ...
-    %             'Do you want to restart the game where they left off (on trial ' num2str(nnz(task.iti_actual) + 1) ')?' '\n\n' ...
-    %             '0 = I need to fix something; restart the function.' '\n' ...
-    %             '5 = Yes, restart the main game at trial ' num2str(nnz(task.iti_actual) + 1) '\n' ...
-    %             'Response: ']);
-    %
-    %             if isempty(start_where) || ~ismember(start_where, [0 5])
-    %               disp('Invalid entry, please try again.')
-    %             end
-    %         end
-    %
-    %         init.trials_start = nnz(task.iti_actual) + 1;
-    %         save([data_file_path sl 'init'], 'init', '-v6');
-    %     end
-    % end
+        load([data_file_path sl init.block{3} '.mat']);
+        block3_complete = init.num_trials(2) == nnz(nansum(task.off(:,2:3),2));
 
-    if start_where == 99
+        if block2_complete && block3_complete
+            start_where = 999;
+            while isempty(start_where) || ~ismember(start_where, [0 99])
+                start_where = input(['\n\n' ...
+                'This subject has complete data,' '\n' ...
+                'are you sure you want to overwrite it?' '\n\n' ...
+                '0 = CANCEL and restart the function' '\n' ...
+                '99 = Yes, I want to overwrite the data' '\n' ...
+                'Response: ']);
+
+                if isempty(start_where) || ~ismember(start_where, [0 99])
+                  disp('Invalid entry, please try again.')
+                end
+            end
+        else
+            while isempty(start_where) || ~ismember(start_where, [0 5])
+                start_where = input(['\n\n' ...
+                'This subject has incomplete data for the ' init.block{3} ' block.' '\n' ...
+                'It looks like they completed ' num2str(nnz(nansum(task.off(:,2:3),2))) ' trials.' '\n' ...
+                'They still have ' num2str(init.num_trials(2) - nnz(nansum(task.off(:,2:3),2))) ' to go.' '\n' ...
+                'Do you want to restart the game where they left off (on trial ' num2str(nnz(nansum(task.off(:,2:3),2)) + 1) ')?' '\n\n' ...
+                '5 = Yes, restart the ' init.block{3} ' game at trial ' num2str(nnz(nansum(task.off(:,2:3),2)) + 1) '\n' ...
+                '0 = I need to fix something; restart the function.' '\n' ...
+                'Response: ']);
+
+                if isempty(start_where) || ~ismember(start_where, [0 5])
+                  disp('Invalid entry, please try again.')
+                end
+            end
+
+            init.trials_start(3) = nnz(nansum(task.off(:,2:3),2)) + 1;
+            save([data_file_path sl 'init'], 'init', '-v6');
+        end
+    elseif isfile([data_file_path sl init.block{2} '.mat']) && ~isfile([data_file_path sl init.block{3} '.mat'])
         load([data_file_path sl 'init.mat']);
 
+        load([data_file_path sl init.block{2} '.mat']);
+        block2_complete = init.num_trials(2) == nnz(nansum(task.off(:,2:3),2));
+
+        if block2_complete
+            while isempty(start_where) || ~ismember(start_where, [0 5])
+                start_where = input(['\n\n' ...
+                'This subject has complete data for the ' init.block{2} ' block,' '\n' ...
+                'but no data for ' init.block{3} ' block.' '\n' ...
+                'Do you want to start from the beginning of the ' init.block{3} ' block?' '\n\n' ...
+                '5 = Yes, start from the beginning of the ' init.block{3} ' block.' '\n' ...
+                '0 = I need to fix something; restart the function.' '\n' ...
+                'Response: ']);
+
+                if isempty(start_where) || ~ismember(start_where, [0 5])
+                  disp('Invalid entry, please try again.')
+                end
+            end
+        else
+            while isempty(start_where) || ~ismember(start_where, [0 4])
+                start_where = input(['\n\n' ...
+                'This subject has incomplete data for the ' init.block{2} ' block.' '\n' ...
+                'It looks like they completed ' num2str(nnz(nansum(task.off(:,2:3),2))) ' trials.' '\n' ...
+                'They still have ' num2str(init.num_trials(2) - nnz(nansum(task.off(:,2:3),2))) ' to go.' '\n' ...
+                'Do you want to restart the game where they left off (on trial ' num2str(nnz(nansum(task.off(:,2:3),2)) + 1) ')?' '\n\n' ...
+                '4 = Yes, restart the ' init.block{2} ' game at trial ' num2str(nnz(nansum(task.off(:,2:3),2)) + 1) '\n' ...
+                '0 = I need to fix something; restart the function.' '\n' ...
+                'Response: ']);
+
+                if isempty(start_where) || ~ismember(start_where, [0 4])
+                  disp('Invalid entry, please try again.')
+                end
+            end
+
+            init.trials_start(2) = nnz(nansum(task.off(:,2:3),2)) + 1;
+            save([data_file_path sl 'init'], 'init', '-v6');
+        end
+    end
+
+    if start_where == 99
         while isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5])
             start_where = input(['\n\n' ...
             'Where do you want to start?' '\n' ...
@@ -295,6 +343,9 @@ if start_where <= 1
         init.researcher = researchers{researcher}; % save the name of the researcher who conducted the study
     end
 
+    % save block order
+    init.block = block;
+
     % stimuli sets
     spaceships = {'cornhusk', 'stingray', 'triangle', 'tripod', 'egg', 'ufo'};
     aliens = {'bubbles', 'eggbert', 'frog', 'fuzz', 'ghost', 'legs', 'nightking', 'penguin', 'rooster', 'sun', 'unicorn', 'viking'};
@@ -306,14 +357,6 @@ if start_where <= 1
     init.stim_step2_color_select = step2_color(randperm(numel(step2_color)));
     init.spaceships = spaceships(randperm(numel(spaceships)));
     init.aliens = aliens(randperm(numel(aliens)));
-
-    % randomize the block order for the food and money blocks
-    block = randi([1,2]);
-    if block == 1
-        init.block = {'practice' 'food' 'money'};
-    else
-        init.block = {'practice' 'money' 'food'};
-    end
 
     % input the number of trials per block; 1 = practice trials, 2 = experimental blocks
     init.num_trials = [num_trials_practice num_trials_main_task];
@@ -336,7 +379,7 @@ if start_where <= 1
     init.pause_to_read = 0.5;
     init.explore_time = 1;
     init.feedback_time = 1;
-    init.trials_start = 1;
+    init.trials_start = [1 1 1];
 
     save([data_file_path sl 'init'], 'init', '-v6');
 

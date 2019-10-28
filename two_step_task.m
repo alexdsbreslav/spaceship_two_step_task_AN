@@ -34,8 +34,8 @@ PsychDefaultSetup(1);
 [w, rect] = Screen('OpenWindow', init.pick_screen, [], init.screen_dimensions);
 
 % if we are starting the task from the middle, then we just want to load the structure
-if isfile([init.data_file_path init.slash_convention 'task.mat'])
-    load([init.data_file_path init.slash_convention 'task.mat']);
+if isfile([init.data_file_path init.slash_convention block '.mat'])
+    load([init.data_file_path init.slash_convention block '.mat']);
 else
     % set up the structure to save all of the variables
     task = struct;
@@ -216,7 +216,7 @@ if strcmp(block,'practice')
     task_func.advance_screen(init.input_source)
 else
     % intro screens for food and money blocks
-    if init.trials_start == 1 % only show the into screens if we're starting from trial 1
+    if init.trials_start(block_idx) == 1 % only show the into screens if we're starting from trial 1
         type = 0;
         picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,1);
         picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,1);
@@ -320,7 +320,7 @@ end
 % -----------------------------------------------------------------------------
 % 8 - Begin trials
 t0 = GetSecs;
-for trial = init.trials_start:trials
+for trial = init.trials_start(block_idx):trials
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -329,7 +329,7 @@ for trial = init.trials_start:trials
 % 9.1 - Stage 1
 % ---- Signal a short break every 30 trials
     RestrictKeysForKbCheck([]);
-    if (trial == (trials/5) + 1 || trial == (2*trials/5) + 1 || trial == (3*trials/5) + 1 || trial == (4*trials/5) + 1) && trial ~= init.trials_start
+    if (trial == (trials/5) + 1 || trial == (2*trials/5) + 1 || trial == (3*trials/5) + 1 || trial == (4*trials/5) + 1) && trial ~= init.trials_start(block_idx)
         Screen('FillRect', w, black);
         Screen('TextSize', w, init.textsize);
         if trial == (trials/5) + 1
@@ -658,7 +658,7 @@ for trial = init.trials_start:trials
         'Returning home!' ...
         ], 'center', 'center', white, [], [], [], 1.6);
     Screen('Flip', w);
-    WaitSecs(init.explore_time)
+    WaitSecs(init.explore_time);
     % saving the data every trial
     save([init.data_file_path sl block], 'task', '-v6');
 
