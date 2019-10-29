@@ -22,8 +22,8 @@ rng_seed = rng;
 rng_seed = rng_seed.Seed;
 
 % Screen setup
-Screen('Preference', 'SkipSyncTests', 1);
-Screen('Preference', 'VisualDebugLevel', 1);% change psych toolbox screen check to black
+Screen('Preference', 'SkipSyncTests', 2); % skip all sync tests; precise sitmulus timing does not matter
+Screen('Preference', 'SuppressAllWarnings', 1); % suppress warnings
 FlushEvents;
 if init.test == 0
     HideCursor;
@@ -32,6 +32,8 @@ PsychDefaultSetup(1);
 
 % open ptb window
 [w, rect] = Screen('OpenWindow', init.pick_screen, [], init.screen_dimensions);
+% enable transparent backgrounds for images
+Screen('BlendFunction', w, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 
 % if we are starting the task from the middle, then we just want to load the structure
 if isfile([init.data_file_path init.slash_convention block '.mat'])
@@ -78,13 +80,14 @@ r_small = [0,0,600,400]*init.scale_stim; % smaller rect for stimuli and rewards
 rc_small = [0,0,600,425]*init.scale_stim;
 r_space = [0,0,1920,1080]*init.scale_background;
 r_ship = [0,0,400,290]*init.scale_stim;
-r_tick_text = [0,0,300,150]*init.scale_stim;
 rects = cell(2,2); % rectangles for touchscreen
 r_txt_bg = [0,0,1550,75]*init.scale_stim;
+r_next_button = [0,0,144,80]*init.scale_stim;
 
 % ---- text rectangles for intro
-txt_bg = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.9);
+txt_bg = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.8);
 txt_bg_center = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.5);
+next_button_loc = CenterRectOnPoint(r_next_button, rect(3)*0.95, rect(4)*0.95);
 
 % ---- backgrounds
 space_bg = CenterRectOnPoint(r_space, rect(3)*0.5, rect(4)*0.5);
@@ -112,14 +115,17 @@ alien_Rframe = CenterRectOnPoint(r, rect(3)*0.75, rect(4)*0.5);
 rects{1,1} = [rect(3)*0.25 - r(3)/2, rect(4)*0.5 - r(4)/2, rect(3)*0.25 + r(3)/2, rect(4)*0.5 + r(4)/2];
 rects{1,2} = [rect(3)*0.75 - r(3)/2, rect(4)*0.5 - r(4)/2, rect(3)*0.75 + r(3)/2, rect(4)*0.5 + r(4)/2];
 
-% ---- read/draw the treasure
+% ---- read/draw the treasure and next button
 treasure = imread(['stimuli' sl 'treasure.png'],'png');
-treasure_spent = imread(['stimuli' sl 'treasure_spent.png'],'png');
 return_home = imread(['stimuli' sl 'return_home.png'],'png');
+[next_button, ~, alpha] = imread(['stimuli' sl 'next_button.png'],'png');
+next_button(:, :, 4) = alpha;
 
 treasure = Screen('MakeTexture', w, treasure);
-treasure_spent = Screen('MakeTexture', w, treasure_spent);
 return_home = Screen('MakeTexture', w, return_home);
+next_button = Screen('MakeTexture', w, next_button);
+
+
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -209,9 +215,10 @@ Screen('TextSize', w, init.textsize);
 if strcmp(block,'practice')
     DrawFormattedText(w,[
         'Let''s practice!' '\n\n' ...
-        'When you are ready, ' init.researcher ' will start the training quest.' '\n' ...
-        'You will have ' num2str(trials) ' days to explore this galaxy.'....
+         'You will have ' num2str(trials) ' days to explore this galaxy.' '\n' ...
+        'When you are ready, press SPACE to start the training quest.'...
         ], 'center','center', white, [], [], [], 1.6);
+    Screen('DrawTexture', w, next_button, [], next_button_loc);
     Screen('Flip',w); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
     task_func.advance_screen(init.input_source)
 else
@@ -220,11 +227,22 @@ else
         type = 0;
         picL = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,type,1);
         picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,1);
+
         DrawFormattedText(w,[
             'Welcome Space Captain,' '\n\n' ...
             'We are sending you on a ' num2str(trials) ' day quest to' '\n' ...
             'find as much space treasure as you can.' ...
             ], 'center','center', white, [], [], [], 1.6);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
+        Screen('Flip',w);
+        WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+        task_func.advance_screen(init.input_source);
+
+        DrawFormattedText(w,[
+            'At the end of the study you will trade the treasure' '\n' ...
+            'that you win during this quest for ' block ' rewards.'
+            ], 'center','center', white, [], [], [], 1.6);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen('Flip',w);
         WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         task_func.advance_screen(init.input_source);
@@ -238,6 +256,7 @@ else
         DrawFormattedText(w,[
             'We have given you two new spaceships to explore a new galaxy.'
             ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen('Flip',w);
         WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         task_func.advance_screen(init.input_source);
@@ -247,6 +266,7 @@ else
         DrawFormattedText(w,[
             'This galaxy is home to Planet ' state2_name ' and Planet ' state3_name '.' ...
             ], 'center','center', white, [], [], [], 1.6);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen('Flip',w);
         WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         task_func.advance_screen(init.input_source);
@@ -263,6 +283,7 @@ else
         DrawFormattedText(w,[
             'The ' state2_color ' aliens live on Planet ' state2_name '.'...
             ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen('Flip',w);
         WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         task_func.advance_screen(init.input_source);
@@ -279,6 +300,7 @@ else
         DrawFormattedText(w,[
             'The ' state3_color ' aliens live on Planet ' state3_name '.'...
             ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen('Flip',w);
         WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         task_func.advance_screen(init.input_source);
@@ -287,6 +309,7 @@ else
             'Remember your training, Space Captain!' '\n' ...
             'All of the rules from the training quest are the same in this quest.' ...
             ],'center','center', white, [], [], [], 1.6);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen('Flip',w);
         WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         task_func.advance_screen(init.input_source);
@@ -294,21 +317,24 @@ else
         DrawFormattedText(w,[
             'Before you start your quest, what questions do you have for ' init.researcher '?' ...
             ],'center','center', white, [], [], [], 1.6);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         WaitSecs(init.pause_to_read);
         task_func.advance_screen(init.input_source);
 
         DrawFormattedText(w,[
-            'When you are ready, ' init.researcher ' will start the big quest.' ...
+            'When you are ready, press SPACE to start the quest.' ...
             ],'center','center', white, [], [], [], 1.6);
+        Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
         WaitSecs(init.pause_to_read);
         task_func.advance_screen(init.input_source);
     else
       DrawFormattedText(w,[
-          'When you are ready, ' init.researcher ' will start your big quest.' '\n'...
+          'When you are ready, press SPACE to restart your quest.' '\n'...
           'You will start right where you left off!' '\n'...
           ],'center','center', white, [], [], [], 1.6);
+      Screen('DrawTexture', w, next_button, [], next_button_loc);
       Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
       WaitSecs(init.pause_to_read);
       task_func.advance_screen(init.input_source);
@@ -332,21 +358,11 @@ for trial = init.trials_start(block_idx):trials
     if (trial == (trials/5) + 1 || trial == (2*trials/5) + 1 || trial == (3*trials/5) + 1 || trial == (4*trials/5) + 1) && trial ~= init.trials_start(block_idx)
         Screen('FillRect', w, black);
         Screen('TextSize', w, init.textsize);
-        if trial == (trials/5) + 1
-            DrawFormattedText(w, [
-                'Let''s pause the game and take a short break!' '\n' ...
-                ],'center', 'center', white, [], [], [], 1.6);
-        else
-            DrawFormattedText(w, [
-                'Let''s pause the game and take a short break!' '\n' ...
-                ],'center', 'center', white, [], [], [], 1.6);
-        end
-
-        Screen('TextSize', w, 20);
         DrawFormattedText(w, [
-            num2str((trial-1)/(trials/5)) ' of 5\ncomplete' ...
-            ],rect(3)*.95, rect(4)*.95, [180 180 180], [], [], [], 1);
-
+            'Let''s pause the game and take a short break!' '\n' ...
+            'After the break, you will restart the quest right where you left off.' '\n\n' ...
+            'When you are ready, press SPACE to get back to your quest!' ...
+            ],'center', 'center', white, [], [], [], 1.6);
         Screen(w, 'Flip');
         task_func.advance_screen(init.input_source)
     end
@@ -682,17 +698,24 @@ if strcmp(block,'practice')
     Screen('TextSize', w, init.textsize);
     Screen(w, 'FillRect', black);
     DrawFormattedText(w,[
-        'Congratulations Space Captain, you are done with the training quest!' ...
+        'Congratulations Space Captain, you are done with the training quest!' '\n'...
+        'Please tell ' init.researcher ' that you are done with the training quest.' ...
         ],'center','center', white, [], [], [], 1.6);
+    Screen('DrawTexture', w, next_button, [], next_button_loc);
     Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
     WaitSecs(init.pause_to_read);
     task_func.advance_screen(init.input_source);
 else
     Screen('TextSize', w, init.textsize);
     Screen(w, 'FillRect', black);
+    Screen('DrawTexture', w, treasure, [], CenterRectOnPoint(r_small, rect(3)*.5, rect(4)*0.3));
     DrawFormattedText(w, [
-        'You finished the game - good job!' '\n\n' ...
-        ], 'center', 'center', white);
+        'Congratulations Space Captain, you finished your quest!' '\n\n' ...
+        'You collected ' num2str(sum(nansum(task.payoff))) ' pieces of treasure.' '\n' ...
+        'At the end, you will trade your ' num2str(sum(nansum(task.payoff))) ' treasure for ' block ' rewards.' '\n' ...
+        'Please tell ' init.researcher ' that you completed the quest.' ...
+        ], 'center', rect(4)*0.5, white, [], [], [], 1.6);
+    Screen('DrawTexture', w, next_button, [], next_button_loc);
     Screen(w, 'Flip'); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
     WaitSecs(init.pause_to_read);
     task_func.advance_screen(init.input_source)

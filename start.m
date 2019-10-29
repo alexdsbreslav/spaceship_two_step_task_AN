@@ -292,6 +292,11 @@ elseif sub_exists == 0
          return
     end
 
+    if start_where == 1
+        % if we are reintializing the subject then delete any existing matlab data
+        delete([init.data_file_path '/*.mat'])
+    end
+
 else
     start_where = 1;
 end
@@ -390,8 +395,8 @@ if start_where <= 1
         double_check = input(['\n\n' ...
           'Researcher = ' init.researcher '\n' ...
           'Subject ID = ' num2str(init.sub) '\n' ...
-          '0 = I need to fix something; restart the function.' '\n' ...
           '1 = This is correct; continue.' '\n' ...
+          '0 = I need to fix something; restart the function.' '\n' ...
           'Response: ' ]);
 
         if isempty(double_check) || ~ismember(double_check, [0 1])
@@ -409,16 +414,16 @@ else
     load([data_file_path sl 'init.mat']);
 end
 
-% % start the tutorial
-% if start_where <= 2
-%     exit_flag = tutorial(init);
-%
-%     if exit_flag == 1
-%         disp('The script was exited because ESCAPE was pressed')
-%         sca; return
-%     end
-% end
-%
+% start the tutorial
+if start_where <= 2
+    exit_flag = tutorial(init);
+
+    if exit_flag == 1
+        disp('The script was exited because ESCAPE was pressed')
+        sca; return
+    end
+end
+
 % start the practice trials
 if start_where <= 3
     exit_flag = two_step_task(init, init.num_trials(1), init.block{1});
@@ -431,6 +436,31 @@ end
 
 % start the first block
 if start_where <= 4
+
+    explain_block = 99;
+    while isempty(explain_block) || ~ismember(explain_block, [0 1])
+        explain_block = input(['\n\n' ...
+          'Block = ' init.block{2} '\n' ...
+          'Remind subject about outcomes of ' init.block{2} ' block:' '\n' ...
+          '"You are playing for ' init.block{2} ' rewards...""' '\n' ...
+          '"If you win a lot of space treasure..."' '\n' ...
+          '"If you do not win a lot of space treasure..."' '\n\n' ...
+          '1 = I''ve explained the block outcomes, continue. ' '\n' ...
+          '0 = I need to fix something; restart the function.' '\n' ...
+          'Response: ' ]);
+
+        if isempty(explain_block) || ~ismember(explain_block, [0 1])
+          disp('Invalid entry, please try again.')
+        end
+    end
+
+    if explain_block == 0
+       disp([ fprintf('\n') ...
+       'OK, you should restart the function to try again'])
+       sca;
+       return
+    end
+
     exit_flag = two_step_task(init, init.num_trials(2), init.block{2});
 
     if exit_flag == 1
@@ -440,7 +470,32 @@ if start_where <= 4
 end
 
 if start_where <= 5
-    exit_flag = two_step_task(init, init.num_trials(2), init.block{3});
+
+  explain_block = 99;
+  while isempty(explain_block) || ~ismember(explain_block, [0 1])
+      explain_block = input(['\n\n' ...
+        'Block = ' init.block{3} '\n' ...
+        'Remind subject about outcomes of ' init.block{3} ' block:' '\n' ...
+        '"You are playing for ' init.block{3} ' rewards..."' '\n' ...
+        '"If you win a lot of space treasure..."' '\n' ...
+        '"If you do not win a lot of space treasure..."' '\n\n' ...
+        '1 = I''ve explained the block outcomes, continue. ' '\n' ...
+        '0 = I need to fix something; restart the function.' '\n' ...
+        'Response: ' ]);
+
+      if isempty(explain_block) || ~ismember(explain_block, [0 1])
+        disp('Invalid entry, please try again.')
+      end
+  end
+
+  if explain_block == 0
+       disp([ fprintf('\n') ...
+       'OK, you should restart the function to try again'])
+       sca;
+       return
+  end
+
+  exit_flag = two_step_task(init, init.num_trials(2), init.block{3});
 
     if exit_flag == 1
         disp('The script was exited because ESCAPE was pressed')

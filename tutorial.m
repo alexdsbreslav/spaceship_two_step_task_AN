@@ -14,14 +14,16 @@ exit_flag = 0;
 sl = init.slash_convention;
 
 % ---- psychtoolbox set up
-Screen('Preference', 'SkipSyncTests', 1);
-Screen('Preference', 'VisualDebugLevel', 1);% change psych toolbox screen check to black
+Screen('Preference', 'SkipSyncTests', 2); %skip all sync tests; precise stimulus timing does not matter
+Screen('Preference', 'SuppressAllWarnings', 1); % suppress warnings
 FlushEvents;
 HideCursor;
 PsychDefaultSetup(1);
 
 % open ptb window
 [w, rect] = Screen('OpenWindow', init.pick_screen, [], init.screen_dimensions);
+% enable transparent backgrounds for images
+Screen('BlendFunction', w, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -37,6 +39,7 @@ r_space = [0,0,1920,1080]*init.scale_background;
 r_ship = [0,0,400,290]*init.scale_stim;
 r_tick_text = [0,0,300,150]*init.scale_stim;
 r_txt_bg = [0,0,1550,75]*init.scale_stim;
+r_next_button = [0,0,144,80]*init.scale_stim;
 rects = cell(2,2); % rectangles for touchscreen
 
 % ---- tutorial locations
@@ -49,9 +52,11 @@ caves = {CenterRectOnPoint(r_ship, rect(3)*0.125, rect(4)*0.5),
             CenterRectOnPoint(r_ship, rect(3)*0.375, rect(4)*0.5),
             CenterRectOnPoint(r_ship, rect(3)*0.625, rect(4)*0.5),
             CenterRectOnPoint(r_ship, rect(3)*0.875, rect(4)*0.5)};
-txt_bg = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.9);
+txt_bg = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.85);
 txt_bg_center = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.5);
-mines = CenterRectOnPoint([0,0,1000,725], rect(3)*0.7, rect(4)*0.4);
+next_button_loc = CenterRectOnPoint(r_next_button, rect(3)*0.95, rect(4)*0.95);
+
+mines = CenterRectOnPoint([0,0,1000,725]*init.scale_stim, rect(3)*0.7, rect(4)*0.4);
 alien_miner = CenterRectOnPoint(r, rect(3)*0.25, rect(4)*0.45);
 
 % ---- backgrounds
@@ -82,14 +87,14 @@ rects{1,2} = [rect(3)*0.75 - r(3)/2, rect(4)*0.5 - r(4)/2, rect(3)*0.75 + r(3)/2
 
 % ---- read/draw the treasure
 treasure = imread(['stimuli' sl 'treasure.png'],'png');
-treasure_spent = imread(['stimuli' sl 'treasure_spent.png'],'png');
-earth = imread(['stimuli' sl 'earth.png'],'png');
 return_home = imread(['stimuli' sl 'return_home.png'],'png');
+[next_button, ~, alpha] = imread(['stimuli' sl 'next_button.png'],'png');
+next_button(:, :, 4) = alpha;
 
 treasure = Screen('MakeTexture', w, treasure);
-treasure_spent = Screen('MakeTexture', w, treasure_spent);
-earth = Screen('MakeTexture', w, earth);
 return_home = Screen('MakeTexture', w, return_home);
+next_button = Screen('MakeTexture', w, next_button);
+
 
 % read/draw the mining images
 cave = imread(['stimuli' sl 'tutorial' sl 'cave.png'],'png');
@@ -108,21 +113,26 @@ mines_rich_exc = Screen('MakeTexture', w, mines_rich_exc);
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
+% parameters for loading stimuli
+spaceship_idx = [1 2];
+alien_idx = [1 2 3 4];
+block_idx = 1;
+
 % --- spaceships
-A1 = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(1)) sl ...
-   char(init.spaceships(1)) sl 'docked.png'],'png');
-B1 = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(1)) sl ...
-   char(init.spaceships(2)) sl 'docked.png'],'png');
+A1 = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(1))) sl 'docked.png'],'png');
+B1 = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(2))) sl 'docked.png'],'png');
 
-A1_out = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(1)) sl ...
-   char(init.spaceships(1)) sl 'out.png'],'png');
-A1_return = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(1)) sl ...
-   char(init.spaceships(1)) sl 'return.png'],'png');
+A1_out = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(1))) sl 'out.png'],'png');
+A1_return = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(1))) sl 'return.png'],'png');
 
-B1_out = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(1)) sl ...
-   char(init.spaceships(2)) sl 'out.png'],'png');
-B1_return = imread(['stimuli' sl 'spaceships' sl char(init.stim_color_step1(1)) sl ...
-   char(init.spaceships(2)) sl 'return.png'],'png');
+B1_out = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(2))) sl 'out.png'],'png');
+B1_return = imread(['stimuli' sl 'spaceships' sl ...
+   char(init.spaceships(spaceship_idx(2))) sl 'return.png'],'png');
 
 A1 = Screen('MakeTexture', w, A1);
 B1 = Screen('MakeTexture', w, B1);
@@ -132,15 +142,15 @@ B1_out = Screen('MakeTexture', w, B1_out);
 B1_return = Screen('MakeTexture', w, B1_return);
 
 % ---- aliens
-A2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(1)) sl char(init.stim_step2_color_select(1)) sl ...
-  char(init.aliens(1)) '.png'],'png');
-B2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(1)) sl char(init.stim_step2_color_select(1)) sl ...
-  char(init.aliens(2)) '.png'],'png');
+A2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx)) sl char(init.stim_step2_color_select(1)) sl ...
+  char(init.aliens(alien_idx(1))) '.png'],'png');
+B2 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx)) sl char(init.stim_step2_color_select(1)) sl ...
+  char(init.aliens(alien_idx(2))) '.png'],'png');
 
-A3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(1)) sl char(init.stim_step2_color_select(2)) sl ...
-  char(init.aliens(3)) '.png'],'png');
-B3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(1)) sl char(init.stim_step2_color_select(2)) sl ...
-  char(init.aliens(4)) '.png'],'png');
+A3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx)) sl char(init.stim_step2_color_select(2)) sl ...
+  char(init.aliens(alien_idx(3))) '.png'],'png');
+B3 = imread(['stimuli' sl 'aliens' sl char(init.stim_colors_step2(block_idx)) sl char(init.stim_step2_color_select(2)) sl ...
+  char(init.aliens(alien_idx(4))) '.png'],'png');
 
 A2 = Screen('MakeTexture', w, A2);
 B2 = Screen('MakeTexture', w, B2);
@@ -231,8 +241,9 @@ Screen('TextSize', w, init.textsize);
 DrawFormattedText(w,[
     'Welcome to training camp, Space Captain!' '\n\n' ...
     'We are going to work together with ' init.researcher '\n' ...
-    'to learn how to play the game. Make sure to listen carefully!' ...
+    'to learn how to play the game. Make sure to read carefully!' ...
     ], 'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -242,6 +253,7 @@ Screen('DrawTexture', w, treasure, [], center_above_text);
 DrawFormattedText(w,[
     'In this game, you are trying to find space treasure.' ...
     ],'center', rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -258,6 +270,7 @@ Screen('DrawTexture', w, B3, [], four_aliens{4});
 DrawFormattedText(w,[
     'These aliens each have their own cave where they dig for space treasure.' ...
     ],'center',rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -274,6 +287,7 @@ Screen('DrawTexture', w, B3, [], four_aliens{4});
 DrawFormattedText(w,[
     'The goal of the game is to find the alien that has the most space treasure to share.' ...
     ],'center',rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -284,6 +298,7 @@ Screen('FillRect', w, black, txt_bg_center);
 DrawFormattedText(w,[
      'These aliens live in a galaxy on far away planets.' ...
      ],'center', 'center', white, [], [], [], 1.6, [], txt_bg_center);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -298,6 +313,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'The ' state2_color ' aliens live on Planet ' state2_name '.'...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -312,6 +328,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'The ' state3_color ' aliens live on Planet ' state3_name '.'...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -326,6 +343,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'To get to these far away planets, we have given you two spaceships.'
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -340,6 +358,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Each day, you will pick one spaceship to explore the galaxy.'
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -375,6 +394,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Your spaceship will navigate the galaxy and choose a planet to land on.'
     ],'center', 'center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -388,6 +408,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Today, your spaceship landed on ' state2_name ', home to the ' state2_color ' aliens!'
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -401,6 +422,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Now we will ask one alien if they have space treasure to share.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -414,6 +436,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'We can only ask one alien to share their space treasure each day.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -447,6 +470,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Nice Job! You chose an alien who had space treasure to share!' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -458,39 +482,20 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Let''s return home so we can try again!' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
 
-% countdown to next trial
-for i = 1:50
-    % ---- space exploration page
-    Screen('DrawTexture', w, return_home, [], space_bg);
-    Screen('DrawTexture', w, A1_return, [], spaceship_return);
+% ---- space exploration page
+Screen('DrawTexture', w, return_home, [], space_bg);
+Screen('DrawTexture', w, A1_return, [], spaceship_return);
+DrawFormattedText(w, [
+    'Returning Home...' ...
+    ], 'center', 'center', white, [], [], [], 1.6);
+Screen(w, 'Flip');
+WaitSecs(init.explore_time);
 
-    % countdown text
-    DrawFormattedText(w, [
-        'Returning Home...' ...
-        ], 'center', 'center', white, [], [], [], 1.6);
-
-    % load bar fill calculation
-    fill_width = 8*i;
-
-    % fill for the load bar
-    Screen('FillRect',w, [255 255 255], ...
-    CenterRectOnPoint([0,0,fill_width, init.load_bar_dimensions(2)], hor_align - init.load_bar_dimensions(1)/2 + fill_width/2, ver_align));
-
-   % outline for the load bar
-    Screen('FrameRect',w, [255 255 255], ...
-    CenterRectOnPoint([0,0,init.load_bar_dimensions(1),init.load_bar_dimensions(2)], hor_align, ver_align), 3);
-
-   Screen(w, 'Flip');
-
-   if i == 25;
-      img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-   end
-   waitfor(rate_obj);
-end
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -525,6 +530,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Your spaceship is navigating the galaxy and will land shortly...'
     ],'center', 'center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -538,6 +544,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Today, your spaceship landed on ' state3_name ', home to the ' state3_color ' aliens!'
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -551,6 +558,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Now we will ask one alien if they have space treasure to share.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -564,6 +572,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'We can only ask one alien to share their space treasure each day.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -596,6 +605,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Oh no! This alien didn''t have any space treasure to share today.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -606,38 +616,19 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Let''s keep exploring to see if we can find more space treasure.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
 
-% countdown to next trial
-for i = 1:50
-    % ---- space exploration page
-    Screen('DrawTexture', w, return_home, [], space_bg);
-    Screen('DrawTexture', w, B1_return, [], spaceship_return);
-
-    % countdown text
-    DrawFormattedText(w, [
-        'Returning Home...' ...
-        ], 'center', 'center', white, [], [], [], 1.6);
-
-    % load bar fill calculation
-    fill_width = 8*i;
-
-    % fill for the load bar
-    Screen('FillRect',w, [255 255 255], ...
-    CenterRectOnPoint([0,0,fill_width, init.load_bar_dimensions(2)], hor_align - init.load_bar_dimensions(1)/2 + fill_width/2, ver_align));
-
-   % outline for the load bar
-    Screen('FrameRect',w, [255 255 255], ...
-    CenterRectOnPoint([0,0,init.load_bar_dimensions(1),init.load_bar_dimensions(2)], hor_align, ver_align), 3);
-
-   Screen(w, 'Flip');
-   if i == 25
-      img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-   end
-   waitfor(rate_obj);
-end
+% ---- space exploration page
+Screen('DrawTexture', w, return_home, [], space_bg);
+Screen('DrawTexture', w, B1_return, [], spaceship_return);
+DrawFormattedText(w, [
+    'Returning Home...' ...
+    ], 'center', 'center', white, [], [], [], 1.6);
+Screen(w, 'Flip');
+WaitSecs(init.explore_time);
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -707,6 +698,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Today, your spaceship landed on ' state2_name ', home to the ' state2_color ' aliens!'
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -776,39 +768,21 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Let''s return home so we can try one more time.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
 
-% countdown to next trial
-for i = 1:50
-    % ---- space exploration page
-    Screen('DrawTexture', w, return_home, [], space_bg);
-    Screen('DrawTexture', w, ship_return, [], spaceship_return);
+% ---- space exploration page
+Screen('DrawTexture', w, return_home, [], space_bg);
+Screen('DrawTexture', w, ship_return, [], spaceship_return);
 
-    % countdown text
-    DrawFormattedText(w, [
-        'Returning Home...' ...
-        ], 'center', 'center', white, [], [], [], 1.6);
-
-    % load bar fill calculation
-    fill_width = 8*i;
-
-    % fill for the load bar
-    Screen('FillRect',w, [255 255 255], ...
-    CenterRectOnPoint([0,0,fill_width, init.load_bar_dimensions(2)], hor_align - init.load_bar_dimensions(1)/2 + fill_width/2, ver_align));
-
-   % outline for the load bar
-    Screen('FrameRect',w, [255 255 255], ...
-    CenterRectOnPoint([0,0,init.load_bar_dimensions(1),init.load_bar_dimensions(2)], hor_align, ver_align), 3);
-
-   Screen(w, 'Flip');
-   if i == 25
-      img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
-   end
-   waitfor(rate_obj);
-end
-
+% countdown text
+DrawFormattedText(w, [
+    'Returning Home...' ...
+    ], 'center', 'center', white, [], [], [], 1.6);
+Screen(w, 'Flip');
+WaitSecs(init.explore_time);
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
@@ -919,6 +893,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Nice Job! You chose an alien who had space treasure to share!' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -927,6 +902,7 @@ DrawFormattedText(w,[
     'Let''s learn more about the aliens.' '\n' ...
     'This will help you find more space treasure.' ...
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -947,6 +923,7 @@ Screen('DrawTexture', w, B3, [], four_aliens{4});
 DrawFormattedText(w,[
     'Each alien goes into their cave to dig for space treasure each day.' ...
     ],'center',rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -962,6 +939,7 @@ Screen('DrawTexture', w, B3, [], four_aliens{4});
 DrawFormattedText(w,[
     'Digging for space treasure is hard work and requires good luck!' ...
     ],'center',rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -977,6 +955,7 @@ Screen('DrawTexture', w, B3, [], four_aliens{4});
 DrawFormattedText(w,[
     'Each day the aliens may or may not find space treasure to share with you.' ...
     ],'center',rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -992,6 +971,7 @@ Screen('DrawTexture', w, B3, [], four_aliens{4});
 DrawFormattedText(w,[
     'Some aliens may be able to share more often than other aliens.' ...
     ],'center',rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1002,6 +982,7 @@ DrawFormattedText(w,[
     'If an alien finds lots of space treasure at the top of their cave...' '\n' ...
     'they will be able to share space treasure on most days.' ...
     ],'center',rect(4)*0.8, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1012,6 +993,7 @@ DrawFormattedText(w,[
     'If an alien has to dig through lots of rock to find space treasure...' '\n' ...
     'they will not be able to share space treasure on most days.' ...
     ],'center',rect(4)*0.8, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1019,6 +1001,7 @@ task_func.advance_screen(init.input_source);
 DrawFormattedText(w,[
     'But remember that each alien is slowly digging in their cave each day.' ...
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1028,6 +1011,7 @@ Screen('DrawTexture', w, mines_rich_exc, [], mines);
 DrawFormattedText(w,[
     'The alien that had lots of space treasure to share in the beginning may slowly run out.' ...
     ],'center',rect(4)*0.8, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1038,6 +1022,7 @@ DrawFormattedText(w,[
     'And the alien that had to dig through lots of rock in the beginning,' '\n' ...
     'may slowly uncover space treasure to share!' ...
     ],'center',rect(4)*0.8, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1046,6 +1031,7 @@ DrawFormattedText(w,[
     'This means you will have to pay close attention.' '\n' ...
     'How much the aliens can share will slowly change over time.' ...
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1059,6 +1045,7 @@ DrawFormattedText(w,[
     'Let''s learn more about your spaceships.' '\n' ...
     'This will help you find more space treasure.' ...
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1073,6 +1060,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Both of your spaceships can land on both planets...' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1086,6 +1074,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'but each spaceship is different.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1095,6 +1084,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'One spaceship will land on Planet ' state2_name ' most of the time.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1108,6 +1098,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'This is where the ' state2_color ' aliens live.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1117,6 +1108,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'The other spaceship will land on Planet ' state3_name ' most of the time.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1130,6 +1122,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'This is where the ' state3_color ' aliens live.' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1140,6 +1133,7 @@ DrawFormattedText(w,[
     'If an alien on one planet has the most space treasure to share,' '\n' ...
     'you want to choose the spaceship that is most likely to land there!'
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1152,6 +1146,7 @@ DrawFormattedText(w,[
     'Now we have given you all of the information you need to win' '\n'...
     'lots of space treasure, but there was a lot to remember.' ...
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1159,6 +1154,7 @@ task_func.advance_screen(init.input_source);
 DrawFormattedText(w,[
     'Lucky for you, ' init.researcher ' is here to help...' ...
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1174,6 +1170,7 @@ Screen('DrawTexture', w, B3, [], four_aliens{4});
 DrawFormattedText(w,[
     'What questions do you have for ' init.researcher ' about the aliens and their caves?' ...
     ],'center',rect(4)*0.75, white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1187,6 +1184,7 @@ Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'What questions do you have for ' init.researcher ' about the spaceships?' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1201,15 +1199,17 @@ DrawFormattedText(w,[
     'You now have all of the knowledge you need to explore' '\n' ...
     'the galaxy and find space treasure!' ...
     ], 'center','center', [], [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
 
 DrawFormattedText(w,[
     'Now it is time for your training quest.' '\n\n' ...
-    'We are going to explore this galaxy for 10 days.' '\n\n' ...
-    'At the end of those 10 days, you will have completed training camp!' ...
+    'We are going to explore this galaxy for ' num2str(init.num_trials(1)) ' days.' '\n\n' ...
+    'At the end of those ' num2str(init.num_trials(1)) ' days, you will have completed training camp!' ...
     ], 'center','center', [], [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
@@ -1217,8 +1217,9 @@ task_func.advance_screen(init.input_source);
 Screen('TextSize', w, init.textsize);
 Screen(w, 'FillRect', black);
 DrawFormattedText(w,[
-    'When you are ready, ' init.researcher ' will load the training quest.' ...
+    'When you are ready, press SPACE to load the training quest.' ...
     ],'center','center', white, [], [], [], 1.6);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen(w, 'Flip');
 WaitSecs(1);;
 task_func.advance_screen(init.input_source);
