@@ -85,7 +85,7 @@ r_txt_bg = [0,0,1550,75]*init.scale_stim;
 r_next_button = [0,0,144,80]*init.scale_stim;
 
 % ---- text rectangles for intro
-txt_bg = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.8);
+txt_bg = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.85);
 txt_bg_center = CenterRectOnPoint(r_txt_bg, rect(3)*0.5, rect(4)*0.5);
 next_button_loc = CenterRectOnPoint(r_next_button, rect(3)*0.95, rect(4)*0.95);
 
@@ -229,7 +229,7 @@ else
         picR = task_func.drawimage(w, A1, B1, A2, B2, A3, B3,1-type,1);
 
         DrawFormattedText(w,[
-            'Welcome Space Captain,' '\n\n' ...
+            'Welcome back Space Captain,' '\n\n' ...
             'We are sending you on a ' num2str(trials) ' day quest to' '\n' ...
             'find as much space treasure as you can.' ...
             ], 'center','center', white, [], [], [], 1.6);
@@ -240,7 +240,7 @@ else
 
         DrawFormattedText(w,[
             'At the end of the study you will trade the treasure' '\n' ...
-            'that you win during this quest for ' block ' rewards.'
+            'that you win during this quest for ' upper(block) ' rewards.'
             ], 'center','center', white, [], [], [], 1.6);
         Screen('DrawTexture', w, next_button, [], next_button_loc);
         Screen('Flip',w);
@@ -712,7 +712,8 @@ else
     DrawFormattedText(w, [
         'Congratulations Space Captain, you finished your quest!' '\n\n' ...
         'You collected ' num2str(sum(nansum(task.payoff))) ' pieces of treasure.' '\n' ...
-        'At the end, you will trade your ' num2str(sum(nansum(task.payoff))) ' treasure for ' block ' rewards.' '\n' ...
+        'At the end, you will trade your ' num2str(sum(nansum(task.payoff))) ' pieces' '\n' ...
+        'of treasure for ' upper(block) ' rewards.' '\n\n' ...
         'Please tell ' init.researcher ' that you completed the quest.' ...
         ], 'center', rect(4)*0.5, white, [], [], [], 1.6);
     Screen('DrawTexture', w, next_button, [], next_button_loc);

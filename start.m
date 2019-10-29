@@ -8,7 +8,7 @@ function start
 test = 1; % set to 1 for testing
 
 % ONLY SET = 1 DURING TESTING; collects screenshots of all of the instructions
-img_collect_on = 0;
+img_collect_on = 1;
 
 % define the names of the researchers
 researchers = {'Lucy', 'Other'}; % list the names of the researchers; do not remove 'other' option
@@ -26,8 +26,8 @@ test_screen_height = 900;
 % ----------------------------defaults for testing------------------------------
 % ------------------------------------------------------------------------------
 if test == 1
-    num_trials_practice = 2;
-    num_trials_main_task = 5;
+    num_trials_practice = 1;
+    num_trials_main_task = 1;
 
     confirm = 99;
     while isempty(confirm) || ~ismember(confirm, [0 1])

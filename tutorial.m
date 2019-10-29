@@ -471,6 +471,7 @@ DrawFormattedText(w,[
     'Nice Job! You chose an alien who had space treasure to share!' ...
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
 Screen('DrawTexture', w, next_button, [], next_button_loc);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
 task_func.advance_screen(init.input_source);
