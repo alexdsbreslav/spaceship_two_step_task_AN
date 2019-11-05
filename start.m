@@ -24,7 +24,8 @@ test_screen_width = 1440;
 test_screen_height = 900;
 
 % python path
-python_path = '/Users/alex/anaconda3/envs/update2020/bin/python';
+python_path = 'BLANK';
+% python_path = '/Users/alex/anaconda3/envs/update2020/bin/python'; % python path on Alex's computer
 
 % ----------------------------defaults for testing------------------------------
 % ------------------------------------------------------------------------------
