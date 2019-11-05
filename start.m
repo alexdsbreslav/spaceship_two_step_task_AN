@@ -1,14 +1,14 @@
 % Please do not share or use this code without my written permission.
 % Author: Alex Breslav
 
-function start
+function start(qualtrics_response_id)
 % -----------------------------------settings-----------------------------------
 % ------------------------------------------------------------------------------
 % testing or running the experiment?
 test = 1; % set to 1 for testing
 
 % ONLY SET = 1 DURING TESTING; collects screenshots of all of the instructions
-img_collect_on = 1;
+img_collect_on = 0;
 
 % define the names of the researchers
 researchers = {'Lucy', 'Other'}; % list the names of the researchers; do not remove 'other' option
@@ -22,6 +22,9 @@ researchers_text = ['\n\n' ...
 % screen dimensions for the test computer
 test_screen_width = 1440;
 test_screen_height = 900;
+
+% python path
+python_path = '/Users/alex/anaconda3/envs/update2020/bin/python'
 
 % ----------------------------defaults for testing------------------------------
 % ------------------------------------------------------------------------------
@@ -136,14 +139,6 @@ end
 filename_subnum = pad(num2str(sub), 4, 'left', '0');
 data_file_path = [file_root sl visit sl 'sub' filename_subnum];
 directory = exist(data_file_path, 'dir'); % check if the directory already exists
-
-% if the directory doesn't exist, they haven't done the food rankings yet
-if directory == 0
-    disp([ fprintf('\n') ...
-    'ERROR: This subject has not completed their food rankings yet.'])
-    sca;
-    return
-end
 
 % randomize the block order for the food and money blocks
 block = randi([1,2]);
@@ -351,6 +346,10 @@ if start_where <= 1
     % save block order
     init.block = block;
 
+    % save the food_ranking
+    food_ranking_table = readtable([data_file_path sl 'food_ranking.csv'])
+    init.food_ranks = food_ranking_table.food
+
     % stimuli sets
     spaceships = {'cornhusk', 'stingray', 'triangle', 'tripod', 'egg', 'ufo'};
     aliens = {'bubbles', 'eggbert', 'frog', 'fuzz', 'ghost', 'legs', 'nightking', 'penguin', 'rooster', 'sun', 'unicorn', 'viking'};
@@ -502,4 +501,18 @@ if start_where <= 5
         sca; return
     end
 end
+
+% load the outcomes and send to post-task survey to reveal outcomes
+load([init.data_file_path init.slash_convention 'food.mat'])
+food_wins = sum(nansum(task.payoff));
+
+load([init.data_file_path init.slash_convention 'money.mat'])
+money_wins = sum(nansum(task.payoff));
+clear task
+
+script_path = [directory sl 'scripts' sl 'get_food_ranks.py']
+space = ' '
+cmd_string = [python_path space script_path space qualtrics_response_id space num2str(food_wins) space num2str(money_wins)]
+system(cmd_string);
+
 end
