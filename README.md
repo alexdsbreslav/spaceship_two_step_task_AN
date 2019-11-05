@@ -13,7 +13,9 @@ For this version of the task:
 
 - I created higher quality stimuli and expanded the stimuli set. This was done so that each block (practice, food, and money blocks) had entirely different stimuli and the stimuli colors/shapes could be randomized between subjects. The stimuli color pairs are all accessible.
 
-- There are practice rounds and two blocks of 150 trials. The incentive paradigm is currently in development; it will involve food and be compatible for AN patients as well as healthy controls.
+- There are practice rounds and two blocks of 150 trials. During both blocks, participants try to win as much space treasure as possible. At the end of both blocks, participants receive a random monetary reward and food item from an array of possible items. The number of items in the array and the items in the array is determined by their performance on that block.
+
+- The task utilizes Qualtrics to capture wanting ratings as well as reveal the results at the end of the study. The entire experimental package is not currently on GitHub. If you would like to run this version of the study, please contact me.
 
 Please do not share or use this code without my written consent.  
 alexander.breslav@duke.edu
