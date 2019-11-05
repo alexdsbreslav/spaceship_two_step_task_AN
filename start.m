@@ -1,7 +1,7 @@
 % Please do not share or use this code without my written permission.
 % Author: Alex Breslav
 
-function start(qualtrics_response_id)
+function start(sub_id, qualtrics_response_id)
 % -----------------------------------settings-----------------------------------
 % ------------------------------------------------------------------------------
 % testing or running the experiment?
@@ -24,13 +24,13 @@ test_screen_width = 1440;
 test_screen_height = 900;
 
 % python path
-python_path = '/Users/alex/anaconda3/envs/update2020/bin/python'
+python_path = '/Users/alex/anaconda3/envs/update2020/bin/python';
 
 % ----------------------------defaults for testing------------------------------
 % ------------------------------------------------------------------------------
 if test == 1
-    num_trials_practice = 1;
-    num_trials_main_task = 1;
+    num_trials_practice = 5;
+    num_trials_main_task = 10;
 
     confirm = 99;
     while isempty(confirm) || ~ismember(confirm, [0 1])
@@ -109,7 +109,7 @@ textsize = ceil(40*scale_background);
 textsize_feedback = ceil(50*scale_background);
 
 % get the subject number as a string
-sub = input('subject id: ');
+sub = sub_id;
 
 % get the visit name
 visit = 99;
@@ -294,6 +294,7 @@ elseif sub_exists == 0
 
 else
     start_where = 1;
+    mkdir(data_file_path)
 end
 
 if start_where <= 1
@@ -345,10 +346,6 @@ if start_where <= 1
 
     % save block order
     init.block = block;
-
-    % save the food_ranking
-    food_ranking_table = readtable([data_file_path sl 'food_ranking.csv'])
-    init.food_ranks = food_ranking_table.food
 
     % stimuli sets
     spaceships = {'cornhusk', 'stingray', 'triangle', 'tripod', 'egg', 'ufo'};
