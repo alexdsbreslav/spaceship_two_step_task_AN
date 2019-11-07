@@ -221,11 +221,6 @@ white = [253 252 250];
 chosen_color = [0 220 0];
 frame_color = white;
 
-% ---- formatting for loading bar
-hor_align = rect(3)*0.5;
-ver_align = rect(4)*0.55;
-rate_obj = robotics.Rate(24);
-
 % --- keep track of actions
 action = NaN(2,3);
 
@@ -356,7 +351,7 @@ Screen('FrameRect',w,frame_color,alien_Lframe,10);
 Screen('FrameRect',w,frame_color,alien_Rframe,10);
 Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
-    'Each day, you will pick one spaceship to explore the galaxy.'
+    'Each day of your quest, you will pick one spaceship to explore the galaxy.'
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
 Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen('Flip',w);
@@ -372,6 +367,20 @@ Screen('FrameRect',w,frame_color,alien_Rframe,10);
 Screen('FillRect', w, black, txt_bg);
 DrawFormattedText(w,[
     'Let''s start off by choosing the spaceship on the left.'
+    ],'center','center', white, [], [], [], 1.6, [], txt_bg);
+Screen('DrawTexture', w, next_button, [], next_button_loc);
+Screen('Flip',w);
+WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
+task_func.advance_screen(init.input_source);
+
+Screen('DrawTexture', w, planet_home, [], space_bg);
+Screen('DrawTexture', w, A1, [], alien_Lpoint);
+Screen('DrawTexture', w, B1, [], alien_Rpoint);
+Screen('FrameRect',w,frame_color,alien_Lframe,10);
+Screen('FrameRect',w,frame_color,alien_Rframe,10);
+Screen('FillRect', w, black, txt_bg);
+DrawFormattedText(w,[
+    'Press the left arrow on your keyboard to choose the spaceship on the left.'
     ],'center','center', white, [], [], [], 1.6, [], txt_bg);
 Screen('Flip',w);
 WaitSecs(init.pause_to_read); img_idx = task_func.get_img(img_idx, init, init.img_collect_on, w);
@@ -1222,7 +1231,7 @@ DrawFormattedText(w,[
     ],'center','center', white, [], [], [], 1.6);
 Screen('DrawTexture', w, next_button, [], next_button_loc);
 Screen(w, 'Flip');
-WaitSecs(1);;
+WaitSecs(1);
 task_func.advance_screen(init.input_source);
 
 ShowCursor;

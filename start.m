@@ -24,7 +24,7 @@ test_screen_width = 1440;
 test_screen_height = 900;
 
 % python path
-python_path = 'BLANK';
+python_path = '/Users/lucygallop/opt/anaconda3/envs/update2020/bin/python';
 % python_path = '/Users/alex/anaconda3/envs/update2020/bin/python'; % python path on Alex's computer
 
 % ----------------------------defaults for testing------------------------------
@@ -508,9 +508,9 @@ load([init.data_file_path init.slash_convention 'money.mat'])
 money_wins = sum(nansum(task.payoff));
 clear task
 
-script_path = [directory sl 'scripts' sl 'get_food_ranks.py']
-space = ' '
-cmd_string = [python_path space script_path space qualtrics_response_id space num2str(food_wins) space num2str(money_wins)]
+script_path = [directory sl 'scripts' sl 'get_food_ranks.py'];
+space = ' ';
+cmd_string = [python_path space script_path space qualtrics_response_id space num2str(food_wins) space num2str(money_wins)];
 system(cmd_string);
 
 end
