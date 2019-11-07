@@ -19,12 +19,13 @@ For this version of the task:
 
 Dependencies:
 - MatLab
- - MatLab 9.4
- - Psychtoolbox 3
- - Statistics and Machine Learning Toolbox 11.3
+  - MatLab 9.4
+  - Psychtoolbox 3
+  - Statistics and Machine Learning Toolbox 11.3
 - Other
- - Qualtrics
- - Python
-  - Pandas, Numpy, requests, json, sys, base64, datetime, webbrowser
+  - Qualtrics
+  - Python
+    - Pandas, Numpy, requests, json, sys, base64, datetime, webbrowser
+
 Please do not share or use this code without my written consent.  
 alexander.breslav@duke.edu
