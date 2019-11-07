@@ -24,8 +24,8 @@ Dependencies:
   - Statistics and Machine Learning Toolbox 11.3
 - Other
   - Qualtrics
-  - Python
-    - Pandas, Numpy, requests, json, sys, base64, datetime, webbrowser
+  - Python 3
+    - pandas, numpy, requests, json, sys, base64, datetime, webbrowser
 
 Please do not share or use this code without my written consent.  
 alexander.breslav@duke.edu
