@@ -17,5 +17,15 @@ For this version of the task:
 
 - The task utilizes Qualtrics to capture wanting ratings as well as reveal the results at the end of the study. The entire experimental package is not currently on GitHub. If you would like to run this version of the study, please contact me.
 
+Dependencies:
+- MatLab
+  - MatLab 9.4
+  - Psychtoolbox 3
+  - Statistics and Machine Learning Toolbox 11.3
+- Other
+  - Qualtrics
+  - Python 3
+    - pandas, numpy, requests, json, sys, base64, datetime, webbrowser
+
 Please do not share or use this code without my written consent.  
 alexander.breslav@duke.edu
