@@ -24,14 +24,24 @@ test_screen_width = 1440;
 test_screen_height = 900;
 
 % python path
-python_path = '/Users/lucygallop/opt/anaconda3/envs/update2020/bin/python';
-% python_path = '/Users/alex/anaconda3/envs/update2020/bin/python'; % python path on Alex's computer
+python_path = '/Users/lucygallop/opt/anaconda3/envs/update2020/bin/python'; % python path on Lucy's computer
+test_for_python_path = exist(python_path);
+if test_for_python_path == 0
+    python_path = '/Users/alex/anaconda3/envs/update2020/bin/python'; % python path on Alex's computer
+    test_for_python_path = exist(python_path);
+    if test_for_python_path == 0
+        disp([ fprintf('\n') ...
+        'ERROR: Python path does not exist.'])
+        sca;
+        return
+    end
+end
 
 % ----------------------------defaults for testing------------------------------
 % ------------------------------------------------------------------------------
 if test == 1
-    num_trials_practice = 5;
-    num_trials_main_task = 10;
+    num_trials_practice = 1;
+    num_trials_main_task = 1;
 
     confirm = 99;
     while isempty(confirm) || ~ismember(confirm, [0 1])
@@ -96,7 +106,7 @@ stimuli_designed_for_screen_width = 1920;
 stimuli_designed_for_screen_height = 1080;
 
 % this is checking for Alex's home setup; if testing here, set screen width to test computer
-if screen_width == 2560 && screen_height == 1440;
+if screen_width == 2560 && screen_height == 1440
     screen_width = test_screen_width;
     screen_height = test_screen_height;
 end
@@ -139,7 +149,6 @@ end
 % create subject folder in the raw data folder
 filename_subnum = pad(num2str(sub), 4, 'left', '0');
 data_file_path = [file_root sl visit sl 'sub' filename_subnum];
-directory = exist(data_file_path, 'dir'); % check if the directory already exists
 
 % randomize the block order for the food and money blocks
 block = randi([1,2]);
@@ -228,31 +237,31 @@ elseif sub_exists == 0
         block2_complete = init.num_trials(2) == nnz(nansum(task.off(:,2:3),2));
 
         if block2_complete
-            while isempty(start_where) || ~ismember(start_where, [0 5])
+            while isempty(start_where) || ~ismember(start_where, [0 6])
                 start_where = input(['\n\n' ...
                 'This subject has complete data for the ' init.block{2} ' block,' '\n' ...
                 'but no data for ' init.block{3} ' block.' '\n' ...
                 'Do you want to start from the beginning of the ' init.block{3} ' block?' '\n\n' ...
-                '5 = Yes, start from the beginning of the ' init.block{3} ' block.' '\n' ...
+                '6 = Yes, start from the beginning of the ' init.block{3} ' block.' '\n' ...
                 '0 = I need to fix something; restart the function.' '\n' ...
                 'Response: ']);
 
-                if isempty(start_where) || ~ismember(start_where, [0 5])
+                if isempty(start_where) || ~ismember(start_where, [0 6])
                   disp('Invalid entry, please try again.')
                 end
             end
         else
-            while isempty(start_where) || ~ismember(start_where, [0 4])
+            while isempty(start_where) || ~ismember(start_where, [0 5])
                 start_where = input(['\n\n' ...
                 'This subject has incomplete data for the ' init.block{2} ' block.' '\n' ...
                 'It looks like they completed ' num2str(nnz(nansum(task.off(:,2:3),2))) ' trials.' '\n' ...
                 'They still have ' num2str(init.num_trials(2) - nnz(nansum(task.off(:,2:3),2))) ' to go.' '\n' ...
                 'Do you want to restart the game where they left off (on trial ' num2str(nnz(nansum(task.off(:,2:3),2)) + 1) ')?' '\n\n' ...
-                '4 = Yes, restart the ' init.block{2} ' game at trial ' num2str(nnz(nansum(task.off(:,2:3),2)) + 1) '\n' ...
+                '5 = Yes, restart the ' init.block{2} ' game at trial ' num2str(nnz(nansum(task.off(:,2:3),2)) + 1) '\n' ...
                 '0 = I need to fix something; restart the function.' '\n' ...
                 'Response: ']);
 
-                if isempty(start_where) || ~ismember(start_where, [0 4])
+                if isempty(start_where) || ~ismember(start_where, [0 5])
                   disp('Invalid entry, please try again.')
                 end
             end
@@ -263,7 +272,7 @@ elseif sub_exists == 0
     end
 
     if start_where == 99
-        while isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5])
+        while isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5 6 7])
             start_where = input(['\n\n' ...
             'Where do you want to start?' '\n' ...
             'You will overwrite any existing data on and after the place you choose.' '\n\n' ...
@@ -271,11 +280,13 @@ elseif sub_exists == 0
             '1 = Re-initialize the subject''s data (this completely starts over)' '\n' ...
             '2 = Tutorial' '\n' ...
             '3 = Practice Game' '\n' ...
-            '4 = Block 1 (' init.block{2} ')' '\n' ...
-            '5 = Block 2 (' init.block{3} ')' '\n' ...
+            '4 = Comprehension Questions (Qualtrics)' '\n' ...
+            '5 = Block 1 (' init.block{2} ')' '\n' ...
+            '6 = Block 2 (' init.block{3} ')' '\n' ...
+            '7 = Reveal results (Qualtrics)' '\n' ...
             'Response: ']);
 
-            if isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5])
+            if isempty(start_where) || ~ismember(start_where, [0 1 2 3 4 5 6 7])
               disp('Invalid entry, please try again.')
             end
         end
@@ -431,8 +442,35 @@ if start_where <= 3
     end
 end
 
-% start the first block
+% start the comprehension questions
 if start_where <= 4
+    script_path = ['"' directory sl 'scripts' sl 'open_comprehension_questions.py' '"'];
+    cmd_string = ['"' python_path '"' ' ' script_path ' ' sub_id ' ' visit];
+    system(cmd_string);
+
+    done_comprehension = 99;
+    while isempty(done_comprehension) || ~ismember(done_comprehension, [0 1])
+        done_comprehension = input(['\n\n' ...
+          'Once you are done the comprehension questions, come back here:' '\n\n' ...
+          '1 = I''ve completed the comprehension questions, continue. ' '\n' ...
+          '0 = I need to fix something; restart the function.' '\n' ...
+          'Response: ' ]);
+
+        if isempty(done_comprehension) || ~ismember(done_comprehension, [0 1])
+          disp('Invalid entry, please try again.')
+        end
+    end
+
+    if done_comprehension == 0
+       disp([ fprintf('\n') ...
+       'OK, you should restart the function to try again'])
+       sca;
+       return
+    end
+end
+
+% start the first block
+if start_where <= 5
 
     explain_block = 99;
     while isempty(explain_block) || ~ismember(explain_block, [0 1])
@@ -466,7 +504,8 @@ if start_where <= 4
     end
 end
 
-if start_where <= 5
+% start the second block
+if start_where <= 6
 
   explain_block = 99;
   while isempty(explain_block) || ~ismember(explain_block, [0 1])
@@ -500,17 +539,18 @@ if start_where <= 5
     end
 end
 
-% load the outcomes and send to post-task survey to reveal outcomes
-load([init.data_file_path init.slash_convention 'food.mat'])
-food_wins = sum(nansum(task.payoff));
+if start_where <= 7
+    % load the outcomes and send to post-task survey to reveal outcomes
+    load([data_file_path sl 'food.mat'])
+    food_wins = sum(nansum(task.payoff));
 
-load([init.data_file_path init.slash_convention 'money.mat'])
-money_wins = sum(nansum(task.payoff));
-clear task
+    load([data_file_path sl 'money.mat'])
+    money_wins = sum(nansum(task.payoff));
+    clear task
 
-script_path = [directory sl 'scripts' sl 'get_food_ranks.py'];
-space = ' ';
-cmd_string = [python_path space script_path space qualtrics_response_id space num2str(food_wins) space num2str(money_wins)];
-system(cmd_string);
+    script_path = ['"' directory sl 'scripts' sl 'get_food_ranks.py' '"'];
+    cmd_string = ['"' python_path '"' ' ' script_path ' ' qualtrics_response_id ' ' num2str(food_wins) ' ' num2str(money_wins)];
+    system(cmd_string);
+end
 
 end
