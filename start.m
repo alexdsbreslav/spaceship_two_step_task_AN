@@ -444,8 +444,13 @@ end
 
 % start the comprehension questions
 if start_where <= 4
-    script_path = ['"' directory sl 'scripts' sl 'open_comprehension_questions.py' '"'];
-    cmd_string = ['"' python_path '"' ' ' script_path ' ' sub_id ' ' visit];
+    script_path = [directory sl 'scripts' sl 'open_comprehension_questions.py'];
+
+    if sum(isspace(path)) > 0
+        script_path = ['"' script_path '"']; % if spaces in path, add ""
+    end
+
+    cmd_string = [python_path ' ' script_path ' ' sub_id ' ' visit];
     system(cmd_string);
 
     done_comprehension = 99;
@@ -549,7 +554,12 @@ if start_where <= 7
     clear task
 
     script_path = ['"' directory sl 'scripts' sl 'get_food_ranks.py' '"'];
-    cmd_string = ['"' python_path '"' ' ' script_path ' ' qualtrics_response_id ' ' num2str(food_wins) ' ' num2str(money_wins)];
+
+    if sum(isspace(path)) > 0
+        script_path = ['"' script_path '"']; % if spaces in path, add ""
+    end
+
+    cmd_string = [python_path ' ' script_path ' ' qualtrics_response_id ' ' num2str(food_wins) ' ' num2str(money_wins)];
     system(cmd_string);
 end
 
