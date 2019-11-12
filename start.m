@@ -446,7 +446,7 @@ end
 if start_where <= 4
     script_path = [directory sl 'scripts' sl 'open_comprehension_questions.py'];
 
-    if sum(isspace(path)) > 0
+    if sum(isspace(script_path)) > 0
         script_path = ['"' script_path '"']; % if spaces in path, add ""
     end
 
@@ -555,7 +555,7 @@ if start_where <= 7
 
     script_path = ['"' directory sl 'scripts' sl 'get_food_ranks.py' '"'];
 
-    if sum(isspace(path)) > 0
+    if sum(isspace(script_path)) > 0
         script_path = ['"' script_path '"']; % if spaces in path, add ""
     end
 
