@@ -26,6 +26,3 @@ Dependencies:
   - Qualtrics
   - Python 3
     - pandas, numpy, requests, json, sys, base64, datetime, webbrowser
-
-Please do not share or use this code without my written consent.  
-alexander.breslav@duke.edu
